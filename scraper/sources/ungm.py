@@ -5,10 +5,11 @@ including UNDP, UNICEF, WHO, WFP, UNOPS, and FAO.
 """
 
 import re
-import requests
-from datetime import datetime, timezone, timedelta
-from typing import List, Optional
-from scraper.sources.base import BaseSource, RawTenderData, NormalizedTenderData
+from datetime import datetime, timedelta, timezone
+from typing import List
+
+from scraper.sources.base import BaseSource, NormalizedTenderData, RawTenderData
+
 
 class UNGMCambodiaSource(BaseSource):
     def __init__(self):

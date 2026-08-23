@@ -4,15 +4,14 @@ Validates procurement notice external links, prevents dead links (404/500),
 and auto-remediates broken URLs to verified official parent procurement portals.
 """
 
-import os
-import sys
-import logging
 import argparse
+import logging
+import os
+from typing import Any, Dict, Optional, Tuple
+
 import requests
-from typing import Dict, Any, Tuple, List, Optional
-from urllib.parse import urlparse
 from dotenv import load_dotenv
-from supabase import create_client, Client
+from supabase import Client, create_client
 
 # Ensure environment variables are loaded
 load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
@@ -159,7 +158,7 @@ class LinkSentinel:
                     logger.error(f"[{idx}/{len(tenders)}] ❌ Failed to update {tender_id}: {e}")
 
         logger.info("\n=======================================================")
-        logger.info(f"🎉 Link Credibility Audit Completed:")
+        logger.info("🎉 Link Credibility Audit Completed:")
         logger.info(f"   - Total Audited: {len(tenders)}")
         logger.info(f"   - Verified Active (HTTP 200): {verified_count}")
         logger.info(f"   - Remediated to Official Portals: {remediated_count}")

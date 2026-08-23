@@ -5,11 +5,13 @@ checklists directly from PDF Standard Bidding Documents (SBD) and Terms of Refer
 """
 
 import io
-import re
-import requests
 import logging
-from typing import Dict, Any, List, Optional
-from scraper.extractors.ai_extractor import MultiProviderAIExtractor, AIExtractionResult
+import re
+from typing import Optional
+
+import requests
+
+from scraper.extractors.ai_extractor import AIExtractionResult, MultiProviderAIExtractor
 
 logger = logging.getLogger(__name__)
 

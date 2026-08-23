@@ -1,9 +1,12 @@
 import re
-import requests
 from datetime import datetime, timedelta
-from typing import List, Dict, Any
+from typing import List
+
+import requests
 from bs4 import BeautifulSoup
-from scraper.sources.base import BaseSource, RawTenderData, NormalizedTenderData
+
+from scraper.sources.base import BaseSource, NormalizedTenderData, RawTenderData
+
 
 class MEFSource(BaseSource):
     """

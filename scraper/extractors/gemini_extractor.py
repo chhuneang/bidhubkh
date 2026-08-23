@@ -1,9 +1,9 @@
-import os
 import json
-import re
+import os
 from typing import List, Optional
-from pydantic import BaseModel, Field
+
 from dotenv import load_dotenv
+from pydantic import BaseModel, Field
 
 load_dotenv()
 
@@ -107,7 +107,7 @@ Extract the following in strict JSON format:
                 if response.text:
                     data = json.loads(response.text)
                     return TenderAIExtractionResult(**data)
-            except Exception as e:
+            except Exception:
                 continue
 
         return self._heuristic_fallback(title, description)
@@ -117,7 +117,6 @@ Extract the following in strict JSON format:
         Deterministic rule-based extractor when AI key is not configured or offline.
         """
         title_lower = title.lower()
-        desc_lower = (description or "").lower()
 
         category = "consulting-services"
         products = []

@@ -5,9 +5,11 @@ and Telecom Cambodia.
 """
 
 import re
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List
-from scraper.sources.base import BaseSource, RawTenderData, NormalizedTenderData
+
+from scraper.sources.base import BaseSource, NormalizedTenderData, RawTenderData
+
 
 class StateUtilitiesSource(BaseSource):
     def __init__(self):

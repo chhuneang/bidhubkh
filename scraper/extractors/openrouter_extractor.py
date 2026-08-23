@@ -1,11 +1,12 @@
-import os
 import json
+import os
 import re
-import requests
-from typing import List, Optional
 from pathlib import Path
-from pydantic import BaseModel, Field
+from typing import List, Optional
+
+import requests
 from dotenv import load_dotenv
+from pydantic import BaseModel, Field
 
 # Load scraper/.env
 env_path = Path(__file__).resolve().parent.parent / ".env"

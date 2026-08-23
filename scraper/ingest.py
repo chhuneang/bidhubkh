@@ -12,13 +12,15 @@ Supports 6 official Cambodian procurement sources:
 
 import argparse
 import sys
-from scraper.sources.world_bank import WorldBankCambodiaSource
+
+from scraper.pipeline import IngestionPipeline
 from scraper.sources.adb import ADBCambodiaSource
 from scraper.sources.mef import MEFSource
-from scraper.sources.ungm import UNGMCambodiaSource
 from scraper.sources.ngo_cambodia import NGOCambodiaSource
 from scraper.sources.state_utilities import StateUtilitiesSource
-from scraper.pipeline import IngestionPipeline
+from scraper.sources.ungm import UNGMCambodiaSource
+from scraper.sources.world_bank import WorldBankCambodiaSource
+
 
 def run_ingestion(source_choice: str = "all", enable_ai: bool = True):
     """Executes the ingestion pipeline for requested sources."""

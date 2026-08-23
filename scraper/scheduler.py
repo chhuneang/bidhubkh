@@ -4,10 +4,11 @@ Executes automated, scheduled sweeps across all 6 Cambodian procurement sources,
 orchestrating AI intelligence summarization and instant Telegram alert dispatch.
 """
 
-import time
 import argparse
 import logging
+import time
 from datetime import datetime
+
 from scraper.ingest import run_ingestion
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -23,9 +24,9 @@ def start_scheduler(interval_minutes: int = 360, run_once: bool = False):
     iteration = 1
     while True:
         start_time = datetime.now()
-        logger.info(f"\n=======================================================")
+        logger.info("\n=======================================================")
         logger.info(f"🔄 Starting Scheduled Ingestion Sweep #{iteration} at {start_time.isoformat()}")
-        logger.info(f"=======================================================")
+        logger.info("=======================================================")
 
         try:
             # Run multi-source pipeline for all 6 sources

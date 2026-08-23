@@ -1,0 +1,24 @@
+# Ruff configuration — BidHubKH ingestion engine
+# Scope: scraper/ Python package (CI gate, see .github/workflows/ci.yml)
+# Philosophy: correctness rules only (real bugs + hygiene). Deliberate
+# scraper idioms stay allowed: broad excepts around flaky HTTP (BLE/S110),
+# naive datetimes matched to Postgres `timestamp` columns (DTZ).
+
+target-version = "py311"
+line-length = 120
+extend-exclude = ["web", "database"]
+
+[lint]
+select = [
+    "E4", "E7", "E9", # pycodestyle: real syntax/logic errors
+    "F",              # pyflakes: undefined names, unused imports/vars
+    "I",              # isort: stable import order
+    "B",              # flake8-bugbear: common footguns
+]
+
+[lint.isort]
+known-first-party = ["scraper"]
+
+[lint.per-file-ignores]
+# load_dotenv() must run before imports that read env vars at module level.
+"scraper/notifications/dispatcher.py" = ["E402"]

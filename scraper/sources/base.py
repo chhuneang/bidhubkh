@@ -1,7 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any
-from pydantic import BaseModel
 from datetime import datetime
+from typing import Any, Dict, List
+
+from pydantic import BaseModel
+
 
 class RawTenderData(BaseModel):
     source_code: str

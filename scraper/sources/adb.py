@@ -1,8 +1,11 @@
 import re
-import requests
 from datetime import datetime
 from typing import List
-from scraper.sources.base import BaseSource, RawTenderData, NormalizedTenderData
+
+import requests
+
+from scraper.sources.base import BaseSource, NormalizedTenderData, RawTenderData
+
 
 class ADBCambodiaSource(BaseSource):
     """

@@ -1,15 +1,17 @@
-import os
 import hashlib
 import json
+import os
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import Optional
+
 from dotenv import load_dotenv
-from scraper.sources.base import BaseSource, RawTenderData, NormalizedTenderData
+
 from scraper.extractors.ai_extractor import MultiProviderAIExtractor
-from scraper.notifications.dispatcher import NotificationDispatcher
 from scraper.link_sentinel import LinkSentinel
-from scraper.validators.rules import validate_tender
+from scraper.notifications.dispatcher import NotificationDispatcher
 from scraper.processors.dedup import DedupEngine
+from scraper.sources.base import BaseSource
+from scraper.validators.rules import validate_tender
 
 load_dotenv()
 
@@ -105,11 +107,11 @@ class IngestionPipeline:
             return res.data[0]["id"] if res.data else None
 
     def run_source(self, source: BaseSource, enable_ai: bool = True) -> dict:
-        print(f"\n==========================================")
+        print("\n==========================================")
         print(f"[Pipeline] Starting collection for: {source.name}")
         if enable_ai and self.ai_extractor.is_available():
             print("[Pipeline] 🤖 Google Gemini 2.0 Flash AI extraction enabled.")
-        print(f"==========================================")
+        print("==========================================")
 
         raw_items = source.fetch_raw()
         print(f"[Pipeline] Retrieved {len(raw_items)} raw items from {source.code}.")

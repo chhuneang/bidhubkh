@@ -1,6 +1,7 @@
 import os
-from typing import Optional
+
 from dotenv import load_dotenv
+
 from scraper.extractors.gemini_extractor import GeminiExtractor, TenderAIExtractionResult
 from scraper.extractors.openrouter_extractor import OpenRouterExtractor
 
