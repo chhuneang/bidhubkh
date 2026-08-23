@@ -1,26 +1,20 @@
 import Link from 'next/link'
-import { Compass, ExternalLink, Shield } from 'lucide-react'
+import { ExternalLink, Shield, Heart } from 'lucide-react'
+import { Logo } from '@/components/ui/Logo'
 
 export function Footer() {
   return (
     <footer className="border-t border-slate-200 bg-white text-slate-600 text-sm mt-auto">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-          {/* Brand Col */}
+          {/* Brand Col with Hand-drawn Logo */}
           <div className="space-y-4 md:col-span-2">
-            <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 shadow-xs">
-                <Compass className="h-4 w-4 text-white" />
-              </div>
-              <span className="text-base font-bold text-slate-900">
-                BidHub<span className="text-blue-600">KH</span>
-              </span>
-            </div>
+            <Logo size="md" showTagline={false} />
             <p className="text-xs text-slate-500 max-w-md leading-relaxed">
               Cambodia&apos;s centralized tender intelligence platform. Aggregating official public procurement notices across government ministries, development banks, and NGOs to empower local enterprises.
             </p>
             <div className="text-xs text-slate-500 flex items-center gap-2">
-              <Shield className="h-3.5 w-3.5 text-blue-600" />
+              <Shield className="h-3.5 w-3.5 text-blue-600 shrink-0" />
               <span>Independent procurement metadata aggregator. Links directly to official sources.</span>
             </div>
           </div>
@@ -98,8 +92,8 @@ export function Footer() {
           <p>© {new Date().getFullYear()} BidHubKH (ប៊ីតហាប់). All rights reserved.</p>
           <div className="flex items-center gap-6">
             <Link href="/pricing" className="hover:text-blue-600 transition-colors">Pricing</Link>
-            <Link href="/tenders" className="hover:text-blue-600 transition-colors">Find Tenders</Link>
-            <Link href="/admin" className="hover:text-blue-600 transition-colors">Sources Health</Link>
+            <Link href="/admin" className="hover:text-blue-600 transition-colors">Source Health</Link>
+            <Link href="/tenders" className="hover:text-blue-600 transition-colors">Catalog</Link>
           </div>
         </div>
       </div>

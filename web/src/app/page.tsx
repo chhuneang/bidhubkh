@@ -26,10 +26,10 @@ import {
 
 // Curated categories preview
 const CATEGORIES = [
-  { slug: 'it-telecom', nameEn: 'IT & Telecom', nameKm: 'បច្ចេកវិទ្យាព័ត៌មាន', count: 18, icon: Laptop },
-  { slug: 'construction-civil', nameEn: 'Construction & Civil', nameKm: 'សំណង់ និងវិស្វកម្ម', count: 34, icon: HardHat },
-  { slug: 'medical-healthcare', nameEn: 'Medical Supplies', nameKm: 'វេជ្ជសាស្ត្រ និងសុខាភិបាល', count: 12, icon: Stethoscope },
-  { slug: 'consulting-services', nameEn: 'Consulting & Advisory', nameKm: 'សេវាប្រឹក្សាយោបល់', count: 15, icon: Briefcase },
+  { slug: 'it-telecom', nameEn: 'IT & Telecom', nameKm: 'បច្ចេកវិទ្យាព័ត៌មាន', count: 18, icon: Laptop, color: 'text-blue-600 bg-blue-50' },
+  { slug: 'construction-civil', nameEn: 'Construction & Civil', nameKm: 'សំណង់ និងវិស្វកម្ម', count: 34, icon: HardHat, color: 'text-amber-600 bg-amber-50' },
+  { slug: 'medical-healthcare', nameEn: 'Medical Supplies', nameKm: 'វេជ្ជសាស្ត្រ និងសុខាភិបាល', count: 12, icon: Stethoscope, color: 'text-rose-600 bg-rose-50' },
+  { slug: 'consulting-services', nameEn: 'Consulting & Advisory', nameKm: 'សេវាប្រឹក្សាយោបល់', count: 15, icon: Briefcase, color: 'text-indigo-600 bg-indigo-50' },
 ]
 
 // Fallback featured tenders
@@ -113,39 +113,41 @@ export default async function HomePage() {
 
       <main className="flex-1">
         {/* HERO SECTION */}
-        <section className="relative overflow-hidden pt-12 pb-18 lg:pt-18 lg:pb-24 border-b border-slate-200/80 bg-white">
+        <section className="relative overflow-hidden pt-12 pb-18 lg:pt-20 lg:pb-24 border-b border-slate-200/80 bg-white">
           <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
             {/* Tag Badge */}
-            <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50/80 px-4 py-1.5 text-xs font-semibold text-blue-700 mb-6 shadow-xs">
-              <Sparkles className="h-3.5 w-3.5 text-blue-600" />
+            <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-1.5 text-xs font-bold text-blue-700 mb-6 shadow-xs hover:scale-105 transition-transform">
+              <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-spin" />
               <span>Cambodia&apos;s Next-Gen Procurement Intelligence</span>
             </div>
 
             {/* Main Headline */}
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 max-w-4xl mx-auto leading-[1.15]">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 max-w-4xl mx-auto leading-[1.15]">
               Discover & Win Public Tenders in{' '}
-              <span className="text-blue-600">Cambodia</span>
+              <span className="text-blue-600 underline decoration-blue-200 decoration-wavy underline-offset-8">
+                Cambodia
+              </span>
             </h1>
 
-            <p className="mt-4 text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
+            <p className="mt-5 text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
               Consolidated opportunities from Government Ministries, World Bank, ADB, and NGOs. Automatically extracted, normalized, and matched to your business.
             </p>
 
             {/* Search Bar */}
             <div className="mt-8 max-w-3xl mx-auto">
-              <form action="/tenders" method="GET" className="bg-white rounded-2xl p-2 sm:p-2.5 shadow-md flex flex-col sm:flex-row items-center gap-2 border border-slate-200">
+              <form action="/tenders" method="GET" className="bg-white rounded-2xl p-2 sm:p-2.5 shadow-md hover:shadow-lg transition-shadow flex flex-col sm:flex-row items-center gap-2 border-2 border-slate-200 focus-within:border-blue-500">
                 <div className="flex items-center gap-3 w-full px-3 py-1.5 flex-1">
-                  <Search className="h-5 w-5 text-slate-400 shrink-0" />
+                  <Search className="h-5 w-5 text-blue-600 shrink-0" />
                   <input
                     type="text"
                     name="q"
                     placeholder="Search by keyword, laptops, road paving, ministry..."
-                    className="w-full bg-transparent text-sm sm:text-base text-slate-900 placeholder-slate-400 focus:outline-none"
+                    className="w-full bg-transparent text-sm sm:text-base text-slate-900 placeholder-slate-400 focus:outline-none font-medium"
                   />
                 </div>
                 <button
                   type="submit"
-                  className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-all active:scale-95 shrink-0 cursor-pointer"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-blue-700 transition-all active:scale-95 shrink-0 cursor-pointer"
                 >
                   <Search className="h-4 w-4" />
                   Find Opportunities
@@ -153,13 +155,13 @@ export default async function HomePage() {
               </form>
 
               {/* Quick Keywords */}
-              <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-xs text-slate-500">
-                <span className="font-semibold text-slate-400">Popular:</span>
+              <div className="mt-3.5 flex flex-wrap items-center justify-center gap-2 text-xs text-slate-500">
+                <span className="font-bold text-slate-400">Popular:</span>
                 {['IT Equipment', 'Solar Power', 'Road Construction', 'Medical Devices', 'CCTV Security'].map((tag) => (
                   <Link
                     key={tag}
                     href={`/tenders?q=${encodeURIComponent(tag)}`}
-                    className="rounded-lg bg-slate-100 px-2.5 py-1 text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors font-medium"
+                    className="rounded-lg bg-slate-100 px-2.5 py-1 text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-all font-semibold hover:scale-105"
                   >
                     {tag}
                   </Link>
@@ -169,21 +171,21 @@ export default async function HomePage() {
 
             {/* Key Metrics */}
             <div className="mt-12 grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-4xl mx-auto">
-              <div className="bg-slate-50/80 rounded-xl p-4 text-center border border-slate-200/80">
-                <div className="text-2xl font-bold text-slate-900">100%</div>
-                <div className="text-xs text-slate-500 mt-1 font-medium">Verified Public Sources</div>
+              <div className="bg-slate-50 rounded-2xl p-4 text-center border border-slate-200/80 shadow-xs card-interactive">
+                <div className="text-2xl font-black text-slate-900">100%</div>
+                <div className="text-xs text-slate-500 mt-1 font-semibold">Verified Public Sources</div>
               </div>
-              <div className="bg-slate-50/80 rounded-xl p-4 text-center border border-slate-200/80">
-                <div className="text-2xl font-bold text-blue-600">Daily</div>
-                <div className="text-xs text-slate-500 mt-1 font-medium">Automated Updates</div>
+              <div className="bg-slate-50 rounded-2xl p-4 text-center border border-slate-200/80 shadow-xs card-interactive">
+                <div className="text-2xl font-black text-blue-600">Daily</div>
+                <div className="text-xs text-slate-500 mt-1 font-semibold">Automated Updates</div>
               </div>
-              <div className="bg-slate-50/80 rounded-xl p-4 text-center border border-slate-200/80">
-                <div className="text-2xl font-bold text-blue-600">AI-Powered</div>
-                <div className="text-xs text-slate-500 mt-1 font-medium">PDF Extraction & Summaries</div>
+              <div className="bg-slate-50 rounded-2xl p-4 text-center border border-slate-200/80 shadow-xs card-interactive">
+                <div className="text-2xl font-black text-blue-600">AI-Powered</div>
+                <div className="text-xs text-slate-500 mt-1 font-semibold">PDF Extraction & Match</div>
               </div>
-              <div className="bg-slate-50/80 rounded-xl p-4 text-center border border-slate-200/80">
-                <div className="text-2xl font-bold text-slate-900">Bilingual</div>
-                <div className="text-xs text-slate-500 mt-1 font-medium">Khmer & English Support</div>
+              <div className="bg-slate-50 rounded-2xl p-4 text-center border border-slate-200/80 shadow-xs card-interactive">
+                <div className="text-2xl font-black text-slate-900">Bilingual</div>
+                <div className="text-xs text-slate-500 mt-1 font-semibold">Khmer & English Support</div>
               </div>
             </div>
           </div>
@@ -192,10 +194,10 @@ export default async function HomePage() {
         {/* 6 OFFICIAL PROCUREMENT SOURCES SHOWCASE */}
         <section className="py-12 border-b border-slate-200 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
-            <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+            <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">
               Integrated Official Cambodian Procurement Sources
             </h2>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-slate-500 mt-1 font-medium">
               Direct ingestion and verified links across Government, Multilateral Banks, UN & Utilities
             </p>
           </div>
@@ -203,80 +205,80 @@ export default async function HomePage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             <Link
               href="/tenders?source=world_bank_kh"
-              className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-blue-500 hover:shadow-md transition-all text-center group flex flex-col items-center justify-center space-y-1.5"
+              className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-blue-400 hover:shadow-md transition-all text-center group flex flex-col items-center justify-center space-y-1.5 card-interactive"
             >
-              <div className="h-9 w-9 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-xs">
+              <div className="h-9 w-9 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 font-black text-xs">
                 WB
               </div>
               <span className="text-xs font-bold text-slate-800 group-hover:text-blue-600 transition-colors">
                 World Bank
               </span>
-              <span className="text-[10px] text-emerald-600 font-semibold">27 Live Tenders</span>
+              <span className="text-[10px] text-emerald-700 font-bold">27 Live Tenders</span>
             </Link>
 
             <Link
               href="/tenders?source=adb_kh"
-              className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-blue-500 hover:shadow-md transition-all text-center group flex flex-col items-center justify-center space-y-1.5"
+              className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-blue-400 hover:shadow-md transition-all text-center group flex flex-col items-center justify-center space-y-1.5 card-interactive"
             >
-              <div className="h-9 w-9 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-xs">
+              <div className="h-9 w-9 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 font-black text-xs">
                 ADB
               </div>
               <span className="text-xs font-bold text-slate-800 group-hover:text-blue-600 transition-colors">
                 ADB Cambodia
               </span>
-              <span className="text-[10px] text-emerald-600 font-semibold">3 Live Tenders</span>
+              <span className="text-[10px] text-emerald-700 font-bold">3 Live Tenders</span>
             </Link>
 
             <Link
               href="/tenders?source=mef_gdipp"
-              className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-blue-500 hover:shadow-md transition-all text-center group flex flex-col items-center justify-center space-y-1.5"
+              className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-blue-400 hover:shadow-md transition-all text-center group flex flex-col items-center justify-center space-y-1.5 card-interactive"
             >
-              <div className="h-9 w-9 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 font-bold text-xs">
+              <div className="h-9 w-9 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 font-black text-xs">
                 MEF
               </div>
               <span className="text-xs font-bold text-slate-800 group-hover:text-blue-600 transition-colors">
                 Gov Ministries
               </span>
-              <span className="text-[10px] text-emerald-600 font-semibold">4 Live Tenders</span>
+              <span className="text-[10px] text-emerald-700 font-bold">4 Live Tenders</span>
             </Link>
 
             <Link
               href="/tenders?source=ungm"
-              className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-blue-500 hover:shadow-md transition-all text-center group flex flex-col items-center justify-center space-y-1.5"
+              className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-blue-400 hover:shadow-md transition-all text-center group flex flex-col items-center justify-center space-y-1.5 card-interactive"
             >
-              <div className="h-9 w-9 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-xs">
+              <div className="h-9 w-9 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 font-black text-xs">
                 UN
               </div>
               <span className="text-xs font-bold text-slate-800 group-hover:text-blue-600 transition-colors">
                 UNGM Cambodia
               </span>
-              <span className="text-[10px] text-emerald-600 font-semibold">3 Live Tenders</span>
+              <span className="text-[10px] text-emerald-700 font-bold">3 Live Tenders</span>
             </Link>
 
             <Link
               href="/tenders?source=ngo_cambodia"
-              className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-blue-500 hover:shadow-md transition-all text-center group flex flex-col items-center justify-center space-y-1.5"
+              className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-blue-400 hover:shadow-md transition-all text-center group flex flex-col items-center justify-center space-y-1.5 card-interactive"
             >
-              <div className="h-9 w-9 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600 font-bold text-xs">
+              <div className="h-9 w-9 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600 font-black text-xs">
                 NGO
               </div>
               <span className="text-xs font-bold text-slate-800 group-hover:text-blue-600 transition-colors">
                 NGO Portals
               </span>
-              <span className="text-[10px] text-emerald-600 font-semibold">2 Live Tenders</span>
+              <span className="text-[10px] text-emerald-700 font-bold">2 Live Tenders</span>
             </Link>
 
             <Link
               href="/tenders?source=state_utilities"
-              className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-blue-500 hover:shadow-md transition-all text-center group flex flex-col items-center justify-center space-y-1.5"
+              className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-blue-400 hover:shadow-md transition-all text-center group flex flex-col items-center justify-center space-y-1.5 card-interactive"
             >
-              <div className="h-9 w-9 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 font-bold text-xs">
+              <div className="h-9 w-9 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 font-black text-xs">
                 EDC
               </div>
               <span className="text-xs font-bold text-slate-800 group-hover:text-blue-600 transition-colors">
                 State Utilities
               </span>
-              <span className="text-[10px] text-emerald-600 font-semibold">2 Live Tenders</span>
+              <span className="text-[10px] text-emerald-700 font-bold">2 Live Tenders</span>
             </Link>
           </div>
         </section>
@@ -285,7 +287,7 @@ export default async function HomePage() {
         <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-8 gap-4">
             <div>
-              <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
+              <h2 className="text-2xl font-black text-slate-900 tracking-tight">
                 Explore by Sector
               </h2>
               <p className="text-sm text-slate-500 mt-1">
@@ -308,13 +310,13 @@ export default async function HomePage() {
                 <Link
                   key={cat.slug}
                   href={`/tenders?category=${cat.slug}`}
-                  className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs hover:shadow-md hover:border-blue-400 transition-all flex flex-col justify-between group"
+                  className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs hover:border-blue-400 transition-all flex flex-col justify-between group card-interactive"
                 >
                   <div className="flex items-center justify-between mb-4">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                    <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${cat.color} group-hover:scale-110 transition-transform`}>
                       <Icon className="h-5 w-5" />
                     </div>
-                    <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">
+                    <span className="text-xs font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-full">
                       {cat.count} Active
                     </span>
                   </div>
@@ -341,7 +343,7 @@ export default async function HomePage() {
                   <Zap className="h-3.5 w-3.5" />
                   Live Opportunities
                 </div>
-                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
+                <h2 className="text-2xl font-black text-slate-900 tracking-tight">
                   Featured & Recent Public Tenders
                 </h2>
               </div>
@@ -360,7 +362,7 @@ export default async function HomePage() {
                 return (
                   <div
                     key={tender.id}
-                    className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs hover:shadow-md hover:border-slate-300 transition-all flex flex-col justify-between"
+                    className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs hover:border-blue-300 transition-all flex flex-col justify-between card-interactive"
                   >
                     <div>
                       {/* Source & Organization Header */}
@@ -369,7 +371,7 @@ export default async function HomePage() {
                           {tender.source}
                         </span>
                         <span
-                          className={`text-[11px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${
+                          className={`text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
                             remaining.isUrgent
                               ? 'bg-amber-50 text-amber-700 border border-amber-200'
                               : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
@@ -386,8 +388,8 @@ export default async function HomePage() {
 
                       {/* Organization & Location */}
                       <div className="mt-3 flex items-center gap-1.5 text-xs text-slate-500">
-                        <Building2 className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                        <span className="truncate">{tender.organization}</span>
+                        <Building2 className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+                        <span className="truncate font-medium">{tender.organization}</span>
                       </div>
 
                       {/* Budget / Value */}
@@ -396,7 +398,7 @@ export default async function HomePage() {
                           <span className="text-slate-400 block text-[10px] uppercase font-bold">
                             Est. Budget
                           </span>
-                          <span className="text-slate-900 font-extrabold text-sm">
+                          <span className="text-slate-900 font-black text-sm">
                             {formatCurrency(tender.estimatedValue, tender.currency)}
                           </span>
                         </div>
@@ -413,8 +415,8 @@ export default async function HomePage() {
 
                     {/* Action Button */}
                     <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
-                      <span className="text-[11px] text-emerald-600 font-bold flex items-center gap-1">
-                        <ShieldCheck className="h-3.5 w-3.5" />
+                      <span className="text-[11px] text-emerald-700 font-bold flex items-center gap-1">
+                        <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
                         {tender.confidenceScore}% AI Confidence
                       </span>
                       <Link
@@ -438,41 +440,41 @@ export default async function HomePage() {
             <h2 className="text-xs font-bold uppercase tracking-widest text-blue-600 mb-2">
               The BidHubKH Advantage
             </h2>
-            <p className="text-3xl font-extrabold text-slate-900 tracking-tight sm:text-4xl">
+            <p className="text-3xl font-black text-slate-900 tracking-tight sm:text-4xl">
               From Discovery to Winning Bids
             </p>
-            <p className="text-sm text-slate-600 mt-3">
+            <p className="text-sm text-slate-600 mt-3 font-medium">
               We eliminate hours of manual browsing across fragmented portals so your team can focus on preparing winning proposals.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs relative">
+            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs relative card-interactive">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600 mb-5 border border-blue-100">
                 <Search className="h-6 w-6" />
               </div>
               <h3 className="text-lg font-bold text-slate-900 mb-2">1. Centralized Aggregation</h3>
-              <p className="text-xs text-slate-600 leading-relaxed">
+              <p className="text-xs text-slate-600 leading-relaxed font-medium">
                 Automated crawlers continuously monitor Cambodian ministries, ADB, World Bank, and development agencies so no deadline slips through.
               </p>
             </div>
 
-            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs relative">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600 mb-5 border border-blue-100">
+            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs relative card-interactive">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 mb-5 border border-indigo-100">
                 <Sparkles className="h-6 w-6" />
               </div>
               <h3 className="text-lg font-bold text-slate-900 mb-2">2. AI Tender Intelligence</h3>
-              <p className="text-xs text-slate-600 leading-relaxed">
+              <p className="text-xs text-slate-600 leading-relaxed font-medium">
                 LLM engine parses 50+ page PDFs in Khmer and English to extract key eligibility criteria, required guarantees, and product specifications.
               </p>
             </div>
 
-            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs relative">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600 mb-5 border border-blue-100">
+            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs relative card-interactive">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 mb-5 border border-emerald-100">
                 <TrendingUp className="h-6 w-6" />
               </div>
               <h3 className="text-lg font-bold text-slate-900 mb-2">3. Bid / No-Bid Decision</h3>
-              <p className="text-xs text-slate-600 leading-relaxed">
+              <p className="text-xs text-slate-600 leading-relaxed font-medium">
                 Matches your company’s product catalog and past experience against tender requirements to generate objective qualification scores.
               </p>
             </div>
