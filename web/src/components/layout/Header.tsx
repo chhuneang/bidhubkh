@@ -67,7 +67,7 @@ export function Header() {
     },
     {
       name: 'Sources Health',
-      href: '/admin',
+      href: '/sources',
       icon: ShieldCheck,
       activeColor: 'text-teal-700 bg-white border-teal-200 shadow-xs ring-2 ring-teal-500/10',
       hoverColor: 'hover:text-teal-700 hover:bg-teal-50/60',

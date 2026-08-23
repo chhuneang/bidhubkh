@@ -92,7 +92,7 @@ export function Footer() {
           <p>© {new Date().getFullYear()} BidHubKH (ប៊ីតហាប់). All rights reserved.</p>
           <div className="flex items-center gap-6">
             <Link href="/pricing" className="hover:text-blue-600 transition-colors">Pricing</Link>
-            <Link href="/admin" className="hover:text-blue-600 transition-colors">Source Health</Link>
+            <Link href="/sources" className="hover:text-blue-600 transition-colors">Sources Health</Link>
             <Link href="/tenders" className="hover:text-blue-600 transition-colors">Catalog</Link>
           </div>
         </div>
