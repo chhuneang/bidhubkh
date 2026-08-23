@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import {
@@ -105,9 +106,9 @@ export function LoginForm() {
             <label className="block text-xs font-medium text-slate-300">
               Password
             </label>
-            <a href="#" className="text-[11px] text-blue-400 hover:text-blue-300">
+            <Link href="/forgot-password" className="text-[11px] text-blue-400 hover:text-blue-300">
               Forgot password?
-            </a>
+            </Link>
           </div>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">

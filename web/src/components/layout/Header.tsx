@@ -1,20 +1,30 @@
+'use client'
+
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/client'
 import { UserNav } from './UserNav'
 import { Search, Bell, ShieldCheck, Compass, Bookmark, LayoutDashboard, User } from 'lucide-react'
 
-export async function Header() {
-  let user: any = null
+export function Header() {
+  const [user, setUser] = useState<any>(null)
+  const supabase = createClient()
 
-  if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    try {
-      const supabase = await createClient()
-      const { data } = await supabase.auth.getUser()
-      user = data.user
-    } catch {
-      // Ignored if offline
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user)
+    })
+
+    // Listen for real-time auth changes (sign in, sign out, token refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+
+    return () => {
+      subscription.unsubscribe()
     }
-  }
+  }, [supabase])
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md">
