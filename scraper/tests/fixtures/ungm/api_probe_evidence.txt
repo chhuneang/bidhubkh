@@ -1,0 +1,13 @@
+UNGM legacy API probe results captured 2026-08-23 via curl (real responses):
+POST https://www.ungm.org/API/Notice/Filter -> HTTP 302 Found
+  Location: /API/GenericError?aspxerrorpath=/API/Notice/Filter
+GET https://www.ungm.org/api/notices/search -> HTTP 302
+GET https://www.ungm.org/API/Notice/PublicSitemap -> HTTP 302
+GET https://www.ungm.org/api/public/notices?pageIndex=1&pageSize=3 -> HTTP 302
+
+Conclusion: every known UNGM JSON API path redirects to /API/GenericError.
+The public site is an Angular SPA (see public_notice_spa_shell.html); notices are
+loaded client-side and are NOT reachable as server-rendered JSON.
+NOTE: scraper/sources/ungm.py performs NO network call at all - fetch_raw() returns
+hardcoded payload dicts. This directory documents that reality; parse tests snapshot
+the adapter's own runtime output schema, clearly labelled as such.

@@ -1,0 +1,60 @@
+{
+ "_capture_note": "Snapshot of the adapter's ACTUAL fetch_raw() output at capture time (2026-08-23), serialized verbatim via pydantic model_dump(mode='json'). This adapter performs no live HTTP request (or its live request failed at capture time and it used its documented fallback); relative deadlines were frozen at capture time. NOT scraped from the wire.",
+ "captured_at": "2026-08-23T14:58:41.238400+00:00",
+ "items": [
+  {
+   "source_code": "ungm",
+   "external_id": "UNGM-KH-2026-091",
+   "source_url": "https://www.ungm.org/Public/Notice/UNGM-KH-2026-091",
+   "title": "UNDP/KHM/RFP/2026/08 - Provision of Solar Mini-Grid Systems for Rural Community Health Centers",
+   "description": "United Nations Development Programme (UNDP) Cambodia invites eligible renewable energy engineering contractors to submit proposals for the turnkey design, supply, installation, and 3-year maintenance of solar photovoltaic mini-grid power systems across 12 rural health centers in Battambang and Siem Reap provinces.",
+   "raw_payload": {
+    "id": "UNGM-KH-2026-091",
+    "title": "UNDP/KHM/RFP/2026/08 - Provision of Solar Mini-Grid Systems for Rural Community Health Centers",
+    "agency": "UNDP Cambodia",
+    "description": "United Nations Development Programme (UNDP) Cambodia invites eligible renewable energy engineering contractors to submit proposals for the turnkey design, supply, installation, and 3-year maintenance of solar photovoltaic mini-grid power systems across 12 rural health centers in Battambang and Siem Reap provinces.",
+    "deadline": "2026-09-20T14:58:41.238400+00:00",
+    "published": "2026-08-21T14:58:41.238400+00:00",
+    "budget": 320000.0,
+    "currency": "USD",
+    "url": "https://www.ungm.org/Public/Notice/UNGM-KH-2026-091"
+   }
+  },
+  {
+   "source_code": "ungm",
+   "external_id": "UNGM-KH-2026-092",
+   "source_url": "https://www.ungm.org/Public/Notice/UNGM-KH-2026-092",
+   "title": "UNICEF-KHM-ITB-2026-015 - Long Term Agreement (LTA) for Supply of Nutrition Kits and Specialized Medical Scales",
+   "description": "UNICEF Cambodia Office is seeking qualified medical equipment suppliers for an initial 24-month Long Term Agreement for the supply and distribution of early childhood nutrition monitoring kits, digital infant scales, and height boards across provincial health departments.",
+   "raw_payload": {
+    "id": "UNGM-KH-2026-092",
+    "title": "UNICEF-KHM-ITB-2026-015 - Long Term Agreement (LTA) for Supply of Nutrition Kits and Specialized Medical Scales",
+    "agency": "UNICEF Cambodia",
+    "description": "UNICEF Cambodia Office is seeking qualified medical equipment suppliers for an initial 24-month Long Term Agreement for the supply and distribution of early childhood nutrition monitoring kits, digital infant scales, and height boards across provincial health departments.",
+    "deadline": "2026-09-13T14:58:41.238400+00:00",
+    "published": "2026-08-22T14:58:41.238400+00:00",
+    "budget": 185000.0,
+    "currency": "USD",
+    "url": "https://www.ungm.org/Public/Notice/UNGM-KH-2026-092"
+   }
+  },
+  {
+   "source_code": "ungm",
+   "external_id": "UNGM-KH-2026-093",
+   "source_url": "https://www.ungm.org/Public/Notice/UNGM-KH-2026-093",
+   "title": "WHO-KHM-2026-RFP-004 - National Laboratory Information Management System (LIMS) Digital Modernization",
+   "description": "World Health Organization Representative Office in Cambodia requires software engineering consultancy services to deploy and integrate an open-source Laboratory Information Management System (LIMS) connecting the National Institute of Public Health (NIPH) with 14 provincial diagnostic laboratories.",
+   "raw_payload": {
+    "id": "UNGM-KH-2026-093",
+    "title": "WHO-KHM-2026-RFP-004 - National Laboratory Information Management System (LIMS) Digital Modernization",
+    "agency": "World Health Organization (WHO) Cambodia",
+    "description": "World Health Organization Representative Office in Cambodia requires software engineering consultancy services to deploy and integrate an open-source Laboratory Information Management System (LIMS) connecting the National Institute of Public Health (NIPH) with 14 provincial diagnostic laboratories.",
+    "deadline": "2026-09-27T14:58:41.238400+00:00",
+    "published": "2026-08-20T14:58:41.238400+00:00",
+    "budget": 240000.0,
+    "currency": "USD",
+    "url": "https://www.ungm.org/Public/Notice/UNGM-KH-2026-093"
+   }
+  }
+ ]
+}

@@ -5,7 +5,6 @@ from datetime import datetime, timedelta
 import pytest
 
 from scraper.validators.rules import (
-    CRITICAL,
     WARNING,
     normalize_title,
     validate_tender,

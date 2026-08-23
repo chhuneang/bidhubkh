@@ -1,0 +1,64 @@
+# BidHubKH CI — Milestone 16 gate.
+# Green here is required before any merge (remaining_work_plan.md §16):
+#   - scraper: ruff lint + pytest (fixture-based, offline)
+#   - web:     vitest + Next.js production build
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  scraper:
+    name: Scraper — lint + tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # Run from repo root: `scraper` is a PEP 420 namespace package, so its
+    # modules only import when the repo root is on sys.path.
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: scraper/requirements-dev.txt
+
+      - name: Install dependencies
+        run: pip install -r scraper/requirements-dev.txt
+
+      - name: Lint (ruff)
+        run: ruff check scraper
+
+      - name: Tests (pytest)
+        run: python -m pytest scraper/tests -q --no-header
+
+  web:
+    name: Web — tests + build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Tests (vitest)
+        run: npm run test -- --passWithNoTests
+
+      - name: Build (Next.js production)
+        run: npm run build

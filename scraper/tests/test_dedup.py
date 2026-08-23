@@ -7,7 +7,6 @@ import pytest
 from scraper.processors.dedup import (
     SIMILARITY_THRESHOLD,
     DedupEngine,
-    DedupVerdict,
     compute_fingerprint,
 )
 

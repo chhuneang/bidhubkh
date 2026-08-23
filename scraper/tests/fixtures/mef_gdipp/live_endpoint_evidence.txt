@@ -1,0 +1,10 @@
+MEF GDPP portal reachability probe, captured 2026-08-23 (real responses):
+
+GET https://gdpp.mef.gov.kh/procurement-notices -> curl exit 6 (Could not resolve host: gdpp.mef.gov.kh)
+  DNS for gdpp.mef.gov.kh does not resolve from this network; requests.get raises NameResolutionError.
+GET https://www.mef.gov.kh/ -> HTTP 403 (Cloudflare-style block, even with browser User-Agent + headers).
+
+Consequence: scraper/sources/mef.py fetch_raw() always falls through to its curated
+_get_active_ministry_tenders() fallback (see fetch_raw_output_snapshot.json).
+The HTML-row parsing branch (.tender-row/.notice-item/tr.table-row selectors) could not be
+exercised against any real page because no page is reachable.
