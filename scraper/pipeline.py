@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import List, Optional
 from dotenv import load_dotenv
 from scraper.sources.base import BaseSource, RawTenderData, NormalizedTenderData
-from scraper.extractors.gemini_extractor import GeminiExtractor
+from scraper.extractors.ai_extractor import MultiProviderAIExtractor
 
 load_dotenv()
 
@@ -18,7 +18,7 @@ class IngestionPipeline:
         self.supabase_url = os.getenv("SUPABASE_URL")
         self.supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_ANON_KEY")
         self.client = None
-        self.ai_extractor = GeminiExtractor()
+        self.ai_extractor = MultiProviderAIExtractor()
 
         if self.supabase_url and self.supabase_key and "your-project" not in self.supabase_url:
             try:

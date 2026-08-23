@@ -45,8 +45,12 @@ Welcome, AI Agent! This document tracks the exact architectural decisions, compl
 - **Source #2 (Asian Development Bank Cambodia)**: [scraper/sources/adb.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/sources/adb.py).
 - Built [scraper/pipeline.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/pipeline.py) and [scraper/ingest.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/ingest.py). Actively tested and writing live data directly to Supabase (`raw_tenders` and `tenders`).
 
-### Milestone 08 — AI Tender Intelligence & Summarization Engine
-- Built [scraper/extractors/gemini_extractor.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/extractors/gemini_extractor.py) powered by **Google Gemini 2.0 Flash** (`google-genai`).
+### Milestone 08 — AI Tender Intelligence & Multi-Provider Engine
+- Built unified multi-provider AI extraction engine in [scraper/extractors/ai_extractor.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/extractors/ai_extractor.py).
+- Supported AI providers:
+  - **OpenRouter** ([openrouter_extractor.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/extractors/openrouter_extractor.py)): Supports free models (`google/gemini-2.0-flash-exp:free`, `meta-llama/llama-3.3-70b-instruct:free`, `deepseek/deepseek-r1:free`, `openrouter/auto`, and custom alpha models).
+  - **Google Gemini Flash** ([gemini_extractor.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/extractors/gemini_extractor.py)): Direct high-speed API via `google-genai`.
+  - **Deterministic Rule Fallback**: Ensures 100% scraper uptime if offline.
 - Extracts structured outputs: 2-3 sentence executive summaries, key buyer intent, product specifications, and mandatory supplier qualification checklists.
 - Wired directly into the ingestion pipeline to automatically enrich all incoming notices in Supabase.
 
