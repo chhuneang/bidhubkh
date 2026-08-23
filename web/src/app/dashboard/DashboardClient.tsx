@@ -12,7 +12,6 @@ import {
   createAlertRule,
   deleteAlertRule
 } from '@/app/actions/dashboard'
-import { logout } from '@/app/actions/auth'
 import {
   Building2,
   Bookmark,
@@ -25,7 +24,6 @@ import {
   Plus,
   Clock,
   ShieldCheck,
-  LogOut,
   Save,
   CheckCircle2,
   Layers,
@@ -34,7 +32,8 @@ import {
   Check,
   AlertTriangle,
   Lightbulb,
-  Tag
+  Tag,
+  QrCode
 } from 'lucide-react'
 
 interface DashboardClientProps {
@@ -98,22 +97,23 @@ export function DashboardClient({
   }
 
   const handleDeleteBid = (savedId: string) => {
-    if (confirm('Remove this tender from your bid pipeline?')) {
-      startTransition(async () => {
-        await deleteSavedTender(savedId)
-        router.refresh()
-      })
-    }
+    if (!confirm('Are you sure you want to remove this tender from your pipeline?')) return
+    startTransition(async () => {
+      await deleteSavedTender(savedId)
+      router.refresh()
+    })
   }
 
   const handleProfileSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
     startTransition(async () => {
-      await updateCompanyProfile(formData)
-      setProfileSuccess(true)
-      setTimeout(() => setProfileSuccess(false), 3000)
-      router.refresh()
+      const res = await updateCompanyProfile(formData)
+      if (res.success) {
+        setProfileSuccess(true)
+        setTimeout(() => setProfileSuccess(false), 3000)
+        router.refresh()
+      }
     })
   }
 
@@ -139,14 +139,14 @@ export function DashboardClient({
       {/* Dashboard Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-xs font-semibold text-blue-400 uppercase tracking-wider mb-1">
+          <div className="flex items-center gap-2 text-xs font-bold text-blue-600 uppercase tracking-wider mb-1">
             <Building2 className="h-4 w-4" />
             Supplier Intelligence Center
           </div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight">
+          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
             {initialCompany?.name || 'My Supplier Dashboard'}
           </h1>
-          <p className="text-xs text-slate-400 mt-1 font-mono">
+          <p className="text-xs text-slate-500 mt-1 font-mono">
             Account: {user.email}
           </p>
         </div>
@@ -154,7 +154,7 @@ export function DashboardClient({
         <div className="flex items-center gap-3">
           <Link
             href="/tenders"
-            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-semibold text-white shadow-lg shadow-blue-600/30 hover:bg-blue-500 transition-all"
+            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition-all cursor-pointer"
           >
             <Plus className="h-3.5 w-3.5" />
             Explore New Tenders
@@ -164,60 +164,60 @@ export function DashboardClient({
 
       {/* Metrics Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="glass-panel rounded-2xl p-5 border border-slate-800">
-          <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
+        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs">
+          <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
             <span>Tracked Bids</span>
-            <FolderKanban className="h-4 w-4 text-blue-400" />
+            <FolderKanban className="h-4 w-4 text-blue-600" />
           </div>
-          <div className="text-2xl font-extrabold text-white mt-2">{savedTenders.length}</div>
-          <div className="text-[11px] text-blue-400 mt-1">In active bid pipeline</div>
+          <div className="text-2xl font-extrabold text-slate-900 mt-2">{savedTenders.length}</div>
+          <div className="text-[11px] text-blue-600 mt-1 font-semibold">In active bid pipeline</div>
         </div>
 
-        <div className="glass-panel rounded-2xl p-5 border border-slate-800">
-          <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
+        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs">
+          <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
             <span>Pipeline Value</span>
-            <TrendingUp className="h-4 w-4 text-emerald-400" />
+            <TrendingUp className="h-4 w-4 text-emerald-600" />
           </div>
-          <div className="text-2xl font-extrabold text-emerald-400 mt-2">
+          <div className="text-2xl font-extrabold text-slate-900 mt-2">
             {formatCurrency(totalPipelineValue, 'USD')}
           </div>
-          <div className="text-[11px] text-slate-400 mt-1">Total contract value target</div>
+          <div className="text-[11px] text-slate-500 mt-1">Total contract value target</div>
         </div>
 
-        <div className="glass-panel rounded-2xl p-5 border border-slate-800">
-          <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
+        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs">
+          <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
             <span>Top AI Match</span>
-            <Sparkles className="h-4 w-4 text-indigo-400" />
+            <Sparkles className="h-4 w-4 text-blue-600" />
           </div>
-          <div className="text-2xl font-extrabold text-indigo-400 mt-2">
+          <div className="text-2xl font-extrabold text-blue-600 mt-2">
             {matchedOpportunities.length > 0 ? `${matchedOpportunities[0].match.score}%` : 'N/A'}
           </div>
-          <div className="text-[11px] text-slate-400 mt-1">Highest qualification fit</div>
+          <div className="text-[11px] text-slate-500 mt-1">Highest qualification fit</div>
         </div>
 
-        <div className="glass-panel rounded-2xl p-5 border border-slate-800">
-          <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
+        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs">
+          <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
             <span>Company Tax Status</span>
-            <ShieldCheck className="h-4 w-4 text-cyan-400" />
+            <ShieldCheck className="h-4 w-4 text-emerald-600" />
           </div>
-          <div className="text-2xl font-extrabold text-cyan-400 mt-2">
+          <div className="text-2xl font-extrabold text-emerald-700 mt-2">
             {initialCompany?.tax_id ? 'Verified' : 'Pending'}
           </div>
-          <div className="text-[11px] text-slate-400 mt-1">
+          <div className="text-[11px] text-slate-500 mt-1">
             {initialCompany?.tax_id ? initialCompany.tax_id : 'Add GDT Tax ID to qualify'}
           </div>
         </div>
       </div>
 
       {/* Tabs Navigation */}
-      <div className="flex items-center gap-2 border-b border-slate-800/80 pb-px overflow-x-auto">
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-px overflow-x-auto">
         <button
           type="button"
           onClick={() => setActiveTab('pipeline')}
-          className={`flex items-center gap-2 px-4 py-3 text-xs font-semibold border-b-2 shrink-0 transition-all cursor-pointer ${
+          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 shrink-0 transition-all cursor-pointer ${
             activeTab === 'pipeline'
-              ? 'border-blue-500 text-blue-400 bg-blue-500/5'
-              : 'border-transparent text-slate-400 hover:text-slate-200'
+              ? 'border-blue-600 text-blue-600 bg-blue-50/50 rounded-t-xl'
+              : 'border-transparent text-slate-500 hover:text-slate-900'
           }`}
         >
           <FolderKanban className="h-4 w-4" />
@@ -227,23 +227,23 @@ export function DashboardClient({
         <button
           type="button"
           onClick={() => setActiveTab('matches')}
-          className={`flex items-center gap-2 px-4 py-3 text-xs font-semibold border-b-2 shrink-0 transition-all cursor-pointer ${
+          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 shrink-0 transition-all cursor-pointer ${
             activeTab === 'matches'
-              ? 'border-blue-500 text-blue-400 bg-blue-500/5'
-              : 'border-transparent text-slate-400 hover:text-slate-200'
+              ? 'border-blue-600 text-blue-600 bg-blue-50/50 rounded-t-xl'
+              : 'border-transparent text-slate-500 hover:text-slate-900'
           }`}
         >
-          <Sparkles className="h-4 w-4 text-indigo-400" />
+          <Sparkles className="h-4 w-4 text-blue-600" />
           AI Matched Opportunities ({matchedOpportunities.length})
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab('company')}
-          className={`flex items-center gap-2 px-4 py-3 text-xs font-semibold border-b-2 shrink-0 transition-all cursor-pointer ${
+          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 shrink-0 transition-all cursor-pointer ${
             activeTab === 'company'
-              ? 'border-blue-500 text-blue-400 bg-blue-500/5'
-              : 'border-transparent text-slate-400 hover:text-slate-200'
+              ? 'border-blue-600 text-blue-600 bg-blue-50/50 rounded-t-xl'
+              : 'border-transparent text-slate-500 hover:text-slate-900'
           }`}
         >
           <Building2 className="h-4 w-4" />
@@ -253,10 +253,10 @@ export function DashboardClient({
         <button
           type="button"
           onClick={() => setActiveTab('alerts')}
-          className={`flex items-center gap-2 px-4 py-3 text-xs font-semibold border-b-2 shrink-0 transition-all cursor-pointer ${
+          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 shrink-0 transition-all cursor-pointer ${
             activeTab === 'alerts'
-              ? 'border-blue-500 text-blue-400 bg-blue-500/5'
-              : 'border-transparent text-slate-400 hover:text-slate-200'
+              ? 'border-blue-600 text-blue-600 bg-blue-50/50 rounded-t-xl'
+              : 'border-transparent text-slate-500 hover:text-slate-900'
           }`}
         >
           <Bell className="h-4 w-4" />
@@ -266,13 +266,13 @@ export function DashboardClient({
         <button
           type="button"
           onClick={() => setActiveTab('billing')}
-          className={`flex items-center gap-2 px-4 py-3 text-xs font-semibold border-b-2 shrink-0 transition-all cursor-pointer ${
+          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 shrink-0 transition-all cursor-pointer ${
             activeTab === 'billing'
-              ? 'border-blue-500 text-blue-400 bg-blue-500/5'
-              : 'border-transparent text-slate-400 hover:text-slate-200'
+              ? 'border-blue-600 text-blue-600 bg-blue-50/50 rounded-t-xl'
+              : 'border-transparent text-slate-500 hover:text-slate-900'
           }`}
         >
-          <span className="text-emerald-400 font-bold">$</span>
+          <span className="text-blue-600 font-bold">$</span>
           Plan & Bakong Billing
         </button>
       </div>
@@ -286,10 +286,10 @@ export function DashboardClient({
                 key={s.key}
                 type="button"
                 onClick={() => setStageFilter(s.key)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium shrink-0 transition-all cursor-pointer ${
+                className={`px-3 py-1.5 rounded-full text-xs font-bold shrink-0 transition-all cursor-pointer ${
                   stageFilter === s.key
-                    ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
-                    : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'bg-white border border-slate-200 text-slate-600 hover:text-slate-900'
                 }`}
               >
                 {s.label}
@@ -306,19 +306,19 @@ export function DashboardClient({
                 return (
                   <div
                     key={item.id}
-                    className="glass-panel rounded-2xl p-5 border border-slate-800 flex flex-col justify-between hover:border-slate-700 transition-all group"
+                    className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs flex flex-col justify-between hover:border-slate-300 hover:shadow-md transition-all group"
                   >
                     <div>
                       <div className="flex items-center justify-between gap-2 mb-3">
-                        <span className="text-[10px] font-semibold text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2.5 py-0.5 rounded-full">
+                        <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-full">
                           {tender?.sources?.name || 'Verified Source'}
                         </span>
                         <div className="flex items-center gap-1.5">
                           <span
-                            className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                            className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
                               remaining.isUrgent
-                                ? 'bg-amber-500/10 text-amber-300 border border-amber-500/20'
-                                : 'bg-slate-900 text-slate-400'
+                                ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                                : 'bg-slate-100 text-slate-600'
                             }`}
                           >
                             {remaining.text}
@@ -328,22 +328,22 @@ export function DashboardClient({
 
                       <Link
                         href={`/tenders/${tender?.slug}`}
-                        className="font-bold text-white text-sm line-clamp-2 group-hover:text-blue-400 transition-colors"
+                        className="font-bold text-slate-900 text-sm line-clamp-2 group-hover:text-blue-600 transition-colors"
                       >
                         {tender?.title}
                       </Link>
 
-                      <div className="mt-3 text-xs text-slate-400 space-y-1">
+                      <div className="mt-3 text-xs text-slate-500 space-y-1">
                         <div className="flex items-center justify-between">
-                          <span className="text-slate-500 text-[11px]">Budget:</span>
-                          <span className="font-semibold text-emerald-400">
+                          <span className="text-slate-400 text-[11px] font-medium">Budget:</span>
+                          <span className="font-bold text-slate-900">
                             {formatCurrency(tender?.estimated_value, tender?.currency)}
                           </span>
                         </div>
                         {tender?.reference_number && (
                           <div className="flex items-center justify-between">
-                            <span className="text-slate-500 text-[11px]">Ref:</span>
-                            <span className="font-mono text-[10px] truncate max-w-[160px]">
+                            <span className="text-slate-400 text-[11px] font-medium">Ref:</span>
+                            <span className="font-mono text-[10px] truncate max-w-[160px] text-slate-600">
                               {tender.reference_number}
                             </span>
                           </div>
@@ -351,11 +351,11 @@ export function DashboardClient({
                       </div>
                     </div>
 
-                    <div className="mt-5 pt-4 border-t border-slate-800/80 flex items-center justify-between gap-2">
+                    <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between gap-2">
                       <select
                         value={item.status}
                         onChange={(e) => handleStatusChange(item.id, e.target.value)}
-                        className="text-xs bg-slate-900 border border-slate-800 text-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-blue-500"
+                        className="text-xs bg-slate-50 border border-slate-200 text-slate-800 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-blue-600 font-medium"
                       >
                         <option value="interested">Interested</option>
                         <option value="reviewing">Reviewing Specs</option>
@@ -368,7 +368,7 @@ export function DashboardClient({
                       <button
                         type="button"
                         onClick={() => handleDeleteBid(item.id)}
-                        className="p-1.5 text-slate-500 hover:text-rose-400 rounded-lg transition-colors cursor-pointer"
+                        className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg transition-colors cursor-pointer"
                         title="Remove from pipeline"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -379,15 +379,15 @@ export function DashboardClient({
               })}
             </div>
           ) : (
-            <div className="glass-panel rounded-2xl p-12 text-center border border-slate-800 space-y-4">
-              <Bookmark className="h-10 w-10 text-slate-600 mx-auto" />
-              <h3 className="text-base font-semibold text-white">No tenders in this stage</h3>
-              <p className="text-xs text-slate-400 max-w-sm mx-auto">
+            <div className="bg-white rounded-2xl p-12 text-center border border-slate-200 shadow-xs space-y-4">
+              <Bookmark className="h-10 w-10 text-slate-400 mx-auto" />
+              <h3 className="text-base font-bold text-slate-900">No tenders in this stage</h3>
+              <p className="text-xs text-slate-500 max-w-sm mx-auto">
                 Explore Cambodia&apos;s government and development bank tenders and click &quot;Save to Bid Pipeline&quot;.
               </p>
               <Link
                 href="/tenders"
-                className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-semibold text-white hover:bg-blue-500 transition-all"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-blue-700 transition-all shadow-xs"
               >
                 Browse Tender Catalog
               </Link>
@@ -401,11 +401,11 @@ export function DashboardClient({
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-indigo-400" />
+              <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-blue-600" />
                 Opportunities Ranked by Qualification Match
               </h2>
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="text-xs text-slate-500 mt-1">
                 AI computes compatibility against your company profile, GDT tax patent, and core sector offerings.
               </p>
             </div>
@@ -417,15 +417,21 @@ export function DashboardClient({
               return (
                 <div
                   key={tender.id}
-                  className="glass-panel rounded-2xl p-6 border border-slate-800 hover:border-indigo-500/40 transition-all flex flex-col justify-between space-y-4"
+                  className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs hover:border-blue-400 hover:shadow-md transition-all flex flex-col justify-between space-y-4"
                 >
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-semibold text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2.5 py-0.5 rounded-full">
+                      <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-full">
                         {tender.sources?.name || 'Verified Source'}
                       </span>
                       <div className="flex items-center gap-2">
-                        <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold border ${tender.match.badgeColor}`}>
+                        <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold border ${
+                          tender.match.score >= 70
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            : tender.match.score >= 50
+                            ? 'bg-amber-50 text-amber-700 border-amber-200'
+                            : 'bg-rose-50 text-rose-700 border-rose-200'
+                        }`}>
                           {tender.match.score}% Match
                         </span>
                       </div>
@@ -433,38 +439,38 @@ export function DashboardClient({
 
                     <Link
                       href={`/tenders/${tender.slug}`}
-                      className="font-bold text-white text-base hover:text-indigo-400 transition-colors line-clamp-2"
+                      className="font-bold text-slate-900 text-base hover:text-blue-600 transition-colors line-clamp-2"
                     >
                       {tender.title}
                     </Link>
 
-                    <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed">
+                    <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed font-medium">
                       {tender.summary || tender.title}
                     </p>
 
-                    <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800/80 space-y-1.5 text-xs">
-                      <div className="flex items-center justify-between text-slate-400">
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5 text-xs">
+                      <div className="flex items-center justify-between text-slate-500">
                         <span>Budget:</span>
-                        <span className="text-emerald-400 font-semibold">
+                        <span className="text-slate-900 font-bold">
                           {formatCurrency(tender.estimated_value, tender.currency)}
                         </span>
                       </div>
-                      <div className="flex items-center justify-between text-slate-400">
+                      <div className="flex items-center justify-between text-slate-500">
                         <span>Deadline:</span>
-                        <span className={remaining.isUrgent ? 'text-amber-300 font-semibold' : 'text-slate-300'}>
+                        <span className={remaining.isUrgent ? 'text-amber-700 font-bold' : 'text-slate-700 font-medium'}>
                           {remaining.text} ({formatDate(tender.deadline)})
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
-                    <span className="text-[11px] text-slate-400">
-                      Fit: <strong className="text-white">{tender.match.tier}</strong>
+                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                    <span className="text-[11px] text-slate-500">
+                      Fit: <strong className="text-slate-900">{tender.match.tier}</strong>
                     </span>
                     <Link
                       href={`/tenders/${tender.slug}`}
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-400 hover:text-indigo-300"
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700"
                     >
                       View AI Gap Analysis
                       <ChevronRight className="h-3.5 w-3.5" />
@@ -479,17 +485,17 @@ export function DashboardClient({
 
       {/* TAB 3: COMPANY PROFILE & CATALOG */}
       {activeTab === 'company' && (
-        <div className="glass-panel rounded-2xl p-6 sm:p-8 border border-slate-800 max-w-3xl">
+        <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-xs max-w-3xl">
           <div className="mb-6">
-            <h2 className="text-lg font-bold text-white">Company Profile & Matching Data</h2>
-            <p className="text-xs text-slate-400 mt-1">
+            <h2 className="text-lg font-bold text-slate-900">Company Profile & Matching Data</h2>
+            <p className="text-xs text-slate-500 mt-1">
               Provide your official business credentials to enable automatic AI qualification matching against government tenders.
             </p>
           </div>
 
           {profileSuccess && (
-            <div className="p-4 mb-6 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-300 flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4" />
+            <div className="p-4 mb-6 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 font-semibold flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
               Company profile updated successfully!
             </div>
           )}
@@ -497,93 +503,93 @@ export function DashboardClient({
           <form onSubmit={handleProfileSubmit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1.5">Company Legal Name</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Company Legal Name</label>
                 <input
                   type="text"
                   name="name"
                   required
                   defaultValue={initialCompany?.name || ''}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1.5">GDT Tax ID Number (VAT / TIN)</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">GDT Tax ID Number (VAT / TIN)</label>
                 <input
                   type="text"
                   name="taxId"
                   placeholder="e.g. K008-902348123"
                   defaultValue={initialCompany?.tax_id || ''}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1.5">MoC Registration Number</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">MoC Registration Number</label>
                 <input
                   type="text"
                   name="registrationNumber"
                   placeholder="e.g. 00049281/2023"
                   defaultValue={initialCompany?.registration_number || ''}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1.5">Primary Industry</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Primary Industry</label>
                 <input
                   type="text"
                   name="industry"
                   defaultValue={initialCompany?.industry || 'IT, Computers & Telecom'}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1.5">Operating Location</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Operating Location</label>
                 <input
                   type="text"
                   name="location"
                   defaultValue={initialCompany?.location || 'Phnom Penh, Cambodia'}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1.5">Contact Phone</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Contact Phone</label>
                 <input
                   type="text"
                   name="phone"
                   placeholder="+855 12 345 678"
                   defaultValue={initialCompany?.phone || ''}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5">Company Website</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">Company Website</label>
               <input
                 type="url"
                 name="website"
                 placeholder="https://yourcompany.com.kh"
                 defaultValue={initialCompany?.website || ''}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5">Core Product Offerings & Keywords</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">Core Product Offerings & Keywords</label>
               <textarea
                 name="description"
                 rows={3}
                 defaultValue={initialCompany?.description || 'Laptops, server hardware, networking cables, uninterruptible power supply (UPS), technical support, CCTV surveillance, road civil works, medical hospital equipment'}
                 placeholder="List your products and services separated by commas to match tender requirements..."
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600"
               />
               <span className="text-[10px] text-slate-500 mt-1 block">
                 The AI Match Engine uses these keywords to calculate match percentages against incoming tender line items.
@@ -593,7 +599,7 @@ export function DashboardClient({
             <button
               type="submit"
               disabled={isPending}
-              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-semibold text-white shadow-lg shadow-blue-600/30 hover:bg-blue-500 transition-all cursor-pointer"
+              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition-all cursor-pointer"
             >
               <Save className="h-3.5 w-3.5" />
               {isPending ? 'Saving...' : 'Save Company Profile & Catalog'}
@@ -607,8 +613,8 @@ export function DashboardClient({
         <div className="space-y-6">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h2 className="text-lg font-bold text-white">Tender Notification Triggers</h2>
-              <p className="text-xs text-slate-400 mt-1">
+              <h2 className="text-lg font-bold text-slate-900">Tender Notification Triggers</h2>
+              <p className="text-xs text-slate-500 mt-1">
                 Receive instant email notifications whenever matching government or donor opportunities appear.
               </p>
             </div>
@@ -616,7 +622,7 @@ export function DashboardClient({
             <button
               type="button"
               onClick={() => setAlertModalOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-500 transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700 transition-all cursor-pointer shadow-xs"
             >
               <Plus className="h-3.5 w-3.5" />
               Create Alert Rule
@@ -626,10 +632,10 @@ export function DashboardClient({
           {alerts.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {alerts.map((rule) => (
-                <div key={rule.id} className="glass-panel rounded-2xl p-5 border border-slate-800 space-y-3">
+                <div key={rule.id} className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-white text-sm">{rule.name}</span>
-                    <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                    <span className="font-bold text-slate-900 text-sm">{rule.name}</span>
+                    <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 font-bold">
                       Active
                     </span>
                   </div>
@@ -637,18 +643,18 @@ export function DashboardClient({
                   {rule.keywords && rule.keywords.length > 0 && (
                     <div className="flex flex-wrap gap-1.5">
                       {rule.keywords.map((k: string, idx: number) => (
-                        <span key={idx} className="text-[10px] bg-slate-900 border border-slate-800 text-slate-300 px-2 py-0.5 rounded-md">
+                        <span key={idx} className="text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md font-medium">
                           {k}
                         </span>
                       ))}
                     </div>
                   )}
 
-                  <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
                     <div className="flex items-center gap-2">
                       <span>Email Digest</span>
                       {rule.telegram_chat_id && (
-                        <span className="text-[10px] bg-blue-500/10 border border-blue-500/30 text-blue-400 px-2 py-0.5 rounded-md font-medium">
+                        <span className="text-[10px] bg-blue-50 border border-blue-200 text-blue-700 px-2 py-0.5 rounded-md font-bold">
                           ✈ Telegram Linked
                         </span>
                       )}
@@ -656,7 +662,7 @@ export function DashboardClient({
                     <button
                       type="button"
                       onClick={() => handleDeleteAlert(rule.id)}
-                      className="text-slate-500 hover:text-rose-400 transition-colors cursor-pointer"
+                      className="text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
@@ -665,16 +671,16 @@ export function DashboardClient({
               ))}
             </div>
           ) : (
-            <div className="glass-panel rounded-2xl p-12 text-center border border-slate-800 space-y-4">
-              <Bell className="h-10 w-10 text-slate-600 mx-auto" />
-              <h3 className="text-base font-semibold text-white">No alert rules active</h3>
-              <p className="text-xs text-slate-400 max-w-sm mx-auto">
+            <div className="bg-white rounded-2xl p-12 text-center border border-slate-200 shadow-xs space-y-4">
+              <Bell className="h-10 w-10 text-slate-400 mx-auto" />
+              <h3 className="text-base font-bold text-slate-900">No alert rules active</h3>
+              <p className="text-xs text-slate-500 max-w-sm mx-auto">
                 Set up keyword and Telegram rules to get notified when new bids match your business.
               </p>
               <button
                 type="button"
                 onClick={() => setAlertModalOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-semibold text-white hover:bg-blue-500 transition-all cursor-pointer"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-blue-700 transition-all cursor-pointer shadow-xs"
               >
                 <Plus className="h-3.5 w-3.5" />
                 Add First Alert Rule
@@ -684,40 +690,40 @@ export function DashboardClient({
 
           {/* Modal to create alert */}
           {alertModalOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-              <div className="glass-panel rounded-2xl p-6 border border-slate-800 max-w-md w-full space-y-4 bg-slate-950">
-                <h3 className="text-base font-bold text-white">Create New Tender Alert</h3>
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+              <div className="rounded-2xl p-6 border border-slate-200 max-w-md w-full space-y-4 bg-white shadow-2xl">
+                <h3 className="text-base font-bold text-slate-900">Create New Tender Alert</h3>
                 <form onSubmit={handleCreateAlert} className="space-y-3">
                   <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">Alert Rule Name</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Alert Rule Name</label>
                     <input
                       type="text"
                       name="name"
                       required
                       placeholder="e.g. IT Laptops & Networking Bids"
-                      className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                      className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">Keywords (comma-separated)</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Keywords (comma-separated)</label>
                     <input
                       type="text"
                       name="keywords"
                       placeholder="laptop, server, network, workstation"
-                      className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                      className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
                       Telegram Chat ID / Channel (Optional)
                     </label>
                     <input
                       type="text"
                       name="telegramChatId"
                       placeholder="e.g. 123456789 or @mycompany_tenders"
-                      className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 font-mono"
+                      className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 font-mono"
                     />
                     <span className="text-[10px] text-slate-500 mt-0.5 block">
                       Get your Telegram ID from @userinfobot to receive instant bot notifications.
@@ -728,14 +734,14 @@ export function DashboardClient({
                     <button
                       type="button"
                       onClick={() => setAlertModalOpen(false)}
-                      className="px-3.5 py-2 rounded-xl border border-slate-800 text-xs text-slate-400 hover:text-white"
+                      className="px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={isPending}
-                      className="px-4 py-2 rounded-xl bg-blue-600 text-xs font-semibold text-white hover:bg-blue-500"
+                      className="px-4 py-2 rounded-xl bg-blue-600 text-xs font-bold text-white hover:bg-blue-700 shadow-xs"
                     >
                       {isPending ? 'Saving...' : 'Save Alert Rule'}
                     </button>
@@ -750,15 +756,15 @@ export function DashboardClient({
       {/* TAB 5: PLAN & BAKONG BILLING */}
       {activeTab === 'billing' && (
         <div className="space-y-6">
-          <div className="glass-panel rounded-2xl p-6 sm:p-8 border border-slate-800 space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800/80">
+          <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-rose-600 to-red-500 text-white font-black text-xs shadow-md shadow-rose-500/20">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-600 text-white font-black text-xs shadow-sm">
                   KH
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white">Active Subscription Plan</h3>
-                  <p className="text-xs text-slate-400">
+                  <h3 className="text-base font-bold text-slate-900">Active Subscription Plan</h3>
+                  <p className="text-xs text-slate-500">
                     Cambodian Bakong KHQR & Corporate Invoicing
                   </p>
                 </div>
@@ -766,7 +772,7 @@ export function DashboardClient({
 
               <Link
                 href="/pricing"
-                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-semibold text-white hover:bg-blue-500 transition-all shadow-md shadow-blue-500/20 shrink-0"
+                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-blue-700 transition-all shadow-sm shrink-0"
               >
                 <Sparkles className="h-3.5 w-3.5" />
                 Change or Upgrade Plan
@@ -775,39 +781,39 @@ export function DashboardClient({
 
             {/* Current Plan Overview */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1">
-                <span className="text-xs text-slate-400 font-medium block">Subscription Tier</span>
-                <span className="text-lg font-bold text-white flex items-center gap-2">
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                <span className="text-xs text-slate-500 font-medium block">Subscription Tier</span>
+                <span className="text-lg font-bold text-slate-900 flex items-center gap-2">
                   Pro Supplier
-                  <span className="text-[10px] bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-2 py-0.5 rounded-md font-semibold">
+                  <span className="text-[10px] bg-emerald-50 border border-emerald-200 text-emerald-700 px-2 py-0.5 rounded-md font-bold">
                     Active
                   </span>
                 </span>
                 <p className="text-[11px] text-slate-500">Billed monthly via Bakong KHQR</p>
               </div>
 
-              <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1">
-                <span className="text-xs text-slate-400 font-medium block">AI Extraction Quota</span>
-                <span className="text-lg font-bold text-emerald-400">Unlimited</span>
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                <span className="text-xs text-slate-500 font-medium block">AI Extraction Quota</span>
+                <span className="text-lg font-bold text-blue-600">Unlimited</span>
                 <p className="text-[11px] text-slate-500">Full BOQ & Win probability models</p>
               </div>
 
-              <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1">
-                <span className="text-xs text-slate-400 font-medium block">Telegram Alert Channels</span>
-                <span className="text-lg font-bold text-cyan-400">Up to 10 Rules</span>
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                <span className="text-xs text-slate-500 font-medium block">Telegram Alert Channels</span>
+                <span className="text-lg font-bold text-blue-600">Up to 10 Rules</span>
                 <p className="text-[11px] text-slate-500">Real-time instant bot push alerts</p>
               </div>
             </div>
 
             {/* Invoicing info */}
-            <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs text-slate-600">
               <div className="flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-emerald-400" />
+                <ShieldCheck className="h-4 w-4 text-emerald-600" />
                 <span>Payment Method: <strong>Bakong KHQR (NBC Standard)</strong></span>
               </div>
               <Link
                 href="/pricing"
-                className="text-blue-400 hover:text-blue-300 font-semibold"
+                className="text-blue-600 hover:text-blue-700 font-bold"
               >
                 View Plans →
               </Link>

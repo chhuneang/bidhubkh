@@ -70,17 +70,17 @@ export function LoginForm() {
   }
 
   return (
-    <div className="glass-panel rounded-2xl p-8 border border-slate-800 space-y-6">
+    <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-xs space-y-6">
       {errorMessage && (
-        <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-xs text-red-300 flex items-start gap-2.5">
-          <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 flex items-start gap-2.5 font-medium">
+          <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-rose-600" />
           <span>{errorMessage}</span>
         </div>
       )}
 
       {successMessage && (
-        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-300 flex items-start gap-2.5">
-          <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" />
+        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-start gap-2.5 font-medium">
+          <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5 text-emerald-600" />
           <span>{successMessage}</span>
         </div>
       )}
@@ -89,7 +89,7 @@ export function LoginForm() {
       <button
         type="button"
         onClick={handleGoogleLogin}
-        className="w-full flex items-center justify-center gap-2.5 rounded-xl border border-slate-800 bg-slate-900/80 px-4 py-3 text-xs font-semibold text-slate-200 hover:bg-slate-800/80 hover:border-slate-700 transition-all cursor-pointer shadow-sm"
+        className="w-full flex items-center justify-center gap-2.5 rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-bold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer shadow-xs"
       >
         <svg className="h-4 w-4" viewBox="0 0 24 24">
           <path
@@ -113,18 +113,18 @@ export function LoginForm() {
       </button>
 
       <div className="relative flex py-1 items-center">
-        <div className="flex-grow border-t border-slate-800"></div>
-        <span className="flex-shrink mx-4 text-[11px] uppercase tracking-wider text-slate-500">Or sign in with email</span>
-        <div className="flex-grow border-t border-slate-800"></div>
+        <div className="flex-grow border-t border-slate-100"></div>
+        <span className="flex-shrink mx-4 text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Or sign in with email</span>
+        <div className="flex-grow border-t border-slate-100"></div>
       </div>
 
       <form onSubmit={handleEmailLogin} className="space-y-4">
         <div>
-          <label className="block text-xs font-medium text-slate-300 mb-1.5">
+          <label className="block text-xs font-bold text-slate-700 mb-1.5">
             Business Email Address
           </label>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
               <Mail className="h-4 w-4" />
             </div>
             <input
@@ -133,22 +133,19 @@ export function LoginForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="name@company.com.kh"
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900/90 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-colors"
             />
           </div>
         </div>
 
         <div>
           <div className="flex items-center justify-between mb-1.5">
-            <label className="block text-xs font-medium text-slate-300">
+            <label className="block text-xs font-bold text-slate-700">
               Password
             </label>
-            <Link href="/forgot-password" className="text-[11px] text-blue-400 hover:text-blue-300">
-              Forgot password?
-            </Link>
           </div>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
               <Lock className="h-4 w-4" />
             </div>
             <input
@@ -157,7 +154,7 @@ export function LoginForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900/90 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-colors"
             />
           </div>
         </div>
@@ -165,7 +162,7 @@ export function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-600/30 hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 transition-all cursor-pointer"
+          className="w-full flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 disabled:opacity-50 transition-all cursor-pointer"
         >
           {loading ? (
             <>

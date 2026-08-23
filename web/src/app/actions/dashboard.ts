@@ -73,6 +73,7 @@ export async function updateCompanyProfile(formData: FormData) {
   }
 
   revalidatePath('/dashboard')
+  return { success: true }
 }
 
 export async function createAlertRule(formData: FormData) {
