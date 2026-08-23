@@ -103,7 +103,9 @@ Welcome, AI Agent! This document tracks the exact architectural decisions, compl
   - **Surfaces/Cards**: `#FFFFFF` (`bg-white border-slate-200 shadow-xs`)
   - **Primary**: `#2563EB` (`bg-blue-600`)
   - **Typography**: Crisp high-contrast slate text (`text-slate-900`, `text-slate-700`, `text-slate-500`).
-- Restyled all 13 application routes: Home (`/`), Catalog (`/tenders`), Details (`/tenders/[slug]`), Pricing (`/pricing`), Dashboard (`/dashboard`), Admin (`/admin`), and Auth (`/login`, `/signup`).
+- Restyled all 14 application routes: Home (`/`), Catalog (`/tenders`), Details (`/tenders/[slug]`), Pricing (`/pricing`), Dashboard (`/dashboard`), Sources Health (`/sources`), Admin (`/admin`), and Auth (`/login`, `/signup`).
+- Created dedicated public **Sources Health & Ingestion Sentinel** page at `/sources` exposing real-time crawler uptime across all 6 Cambodian official portals.
+- Completely revamped **Bid Pipeline** with stage count badges, stage color hierarchy, card-interactive hover states, and framed tab docks.
 - Verified zero build/TypeScript errors (`npm run build`).
 
 ---
