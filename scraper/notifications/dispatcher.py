@@ -7,7 +7,7 @@ import os
 import sys
 import logging
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from dotenv import load_dotenv
 
 # Ensure environment variables are loaded
