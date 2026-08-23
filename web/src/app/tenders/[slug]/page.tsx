@@ -23,7 +23,9 @@ import {
 } from 'lucide-react'
 import { SaveTenderButton } from '@/components/tenders/SaveTenderButton'
 import { SupplierMatchCard } from '@/components/tenders/SupplierMatchCard'
+import { BidDecisionMatrixCard } from '@/components/tenders/BidDecisionMatrixCard'
 import { calculateSupplierMatch } from '@/lib/matching'
+import { computeBidDecision } from '@/lib/decision_matrix'
 
 // Default fallback sample tender
 const FALLBACK_TENDER = {
@@ -151,6 +153,7 @@ export default async function TenderDetailPage({
 
   const documents = tender.tender_documents || []
   const matchResult = calculateSupplierMatch(tender, company)
+  const decisionResult = computeBidDecision(tender, company)
 
   return (
     <div className="min-h-screen flex flex-col bg-[#090d16] text-slate-100">
@@ -215,6 +218,12 @@ export default async function TenderDetailPage({
               matchResult={matchResult}
               company={company}
               isLoggedIn={!!user}
+            />
+
+            {/* AI BID / NO-BID DECISION MATRIX CARD */}
+            <BidDecisionMatrixCard
+              decisionResult={decisionResult}
+              tenderTitle={tender.title}
             />
 
             {/* AI TENDER INTELLIGENCE SUMMARY */}
