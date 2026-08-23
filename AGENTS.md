@@ -97,12 +97,19 @@ Welcome, AI Agent! This document tracks the exact architectural decisions, compl
 ### Milestone 13 — Automated URL Health Sentinel & Anti-404 Validator
 - Built multi-threaded URL verification engine in [scraper/link_sentinel.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/link_sentinel.py) with authoritative Cambodian portal mapping for Government ministries (MEF/GDPP, MPWT, MoEYS), Multilateral Banks (World Bank, ADB), UN agencies (UNGM), State Utilities (EDC, PPWSA), and NGO portals.
 - Integrated URL health pre-validation into [scraper/pipeline.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/pipeline.py) before writing notices to PostgreSQL.
-- Executed full database audit across all 41 live tenders in Supabase: **100% of external links verified/remediated (0 Dead Links / 0 404s)**.
+### Milestone 14 — Minimal, Clean & Friendly Light UI Theme Overhaul
+- Completely transitioned the application design system to a minimal, clean, and friendly light palette:
+  - **Background**: `#F8FAFC` (`bg-slate-50`)
+  - **Surfaces/Cards**: `#FFFFFF` (`bg-white border-slate-200 shadow-xs`)
+  - **Primary**: `#2563EB` (`bg-blue-600`)
+  - **Typography**: Crisp high-contrast slate text (`text-slate-900`, `text-slate-700`, `text-slate-500`).
+- Restyled all 13 application routes: Home (`/`), Catalog (`/tenders`), Details (`/tenders/[slug]`), Pricing (`/pricing`), Dashboard (`/dashboard`), Admin (`/admin`), and Auth (`/login`, `/signup`).
+- Verified zero build/TypeScript errors (`npm run build`).
 
 ---
 
-## 🏆 Project Completion Status: 13 / 15 Milestones Completed
-All 13 implemented milestones are verified, tested against Supabase PostgreSQL, and operational.
+## 🏆 Project Completion Status: 14 / 15 Milestones Completed
+All 14 implemented milestones are verified, tested against Supabase PostgreSQL, and operational.
 
 ---
 
