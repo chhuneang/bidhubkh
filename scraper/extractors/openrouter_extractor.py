@@ -1,10 +1,15 @@
 import os
 import json
+import re
 import requests
 from typing import List, Optional
+from pathlib import Path
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 
+# Load scraper/.env
+env_path = Path(__file__).resolve().parent.parent / ".env"
+load_dotenv(dotenv_path=env_path)
 load_dotenv()
 
 class TenderAIExtractionResult(BaseModel):
@@ -12,6 +17,7 @@ class TenderAIExtractionResult(BaseModel):
         description="A concise 2-3 sentence executive summary explaining what is being purchased, key context, and scale."
     )
     key_buyer_intent: str = Field(
+        default="Procure required goods and services fulfilling stated specifications.",
         description="The primary objective or problem the procuring entity is trying to solve."
     )
     products_services: List[str] = Field(
@@ -23,7 +29,7 @@ class TenderAIExtractionResult(BaseModel):
         description="Mandatory qualification criteria, certifications (e.g. MAF, ISO, MPWT grade, GDT tax certificate), and years of experience needed."
     )
     bid_security: Optional[str] = Field(
-        default=None,
+        default="Not specified in notice",
         description="Required bank guarantee, bid bond amount, or submission security if specified."
     )
     estimated_value: Optional[float] = Field(
@@ -38,13 +44,13 @@ class TenderAIExtractionResult(BaseModel):
 class OpenRouterExtractor:
     """
     Procurement Intelligence Extractor powered by OpenRouter API.
-    Supports free and custom models with JSON extraction.
+    Supports stealth/ox-alpha, openrouter/auto, and free models.
     """
     DEFAULT_MODELS = [
-        "google/gemini-2.0-flash-exp:free",
-        "meta-llama/llama-3.3-70b-instruct:free",
-        "deepseek/deepseek-r1:free",
-        "qwen/qwen-2.5-72b-instruct:free",
+        "stealth/ox-alpha",
+        "nvidia/nemotron-3.5-lightning:free",
+        "google/gemma-4-31b-it:free",
+        "google/gemma-4-26b-a4b-it:free",
         "openrouter/auto"
     ]
 
@@ -56,27 +62,52 @@ class OpenRouterExtractor:
     def is_available(self) -> bool:
         return bool(self.api_key and "your_" not in self.api_key)
 
+    def _extract_json_block(self, text: str) -> Optional[dict]:
+        clean = text.strip()
+        if clean.startswith("```json"):
+            clean = clean[7:]
+        if clean.startswith("```"):
+            clean = clean[3:]
+        if clean.endswith("```"):
+            clean = clean[:-3]
+        clean = clean.strip()
+
+        # Direct parse attempt
+        try:
+            return json.loads(clean)
+        except Exception:
+            pass
+
+        # Regex search for first JSON object
+        match = re.search(r'(\{[\s\S]*\})', clean)
+        if match:
+            try:
+                return json.loads(match.group(1))
+            except Exception:
+                pass
+        return None
+
     def extract_from_text(self, title: str, description: str, source_name: str = "") -> Optional[TenderAIExtractionResult]:
         if not self.is_available():
             return None
 
         prompt = f"""You are an expert procurement intelligence analyst for BidHubKH in Cambodia.
-Analyze the following tender notice announcement and extract structured intelligence.
+Analyze the following tender notice announcement and extract structured intelligence in JSON format.
 
 Tender Title: {title}
 Procuring Source / Organization: {source_name}
 Notice Content / Description:
 {description}
 
-Extract the following in strict raw JSON format with NO markdown wrapping:
+Output ONLY a JSON object with these keys:
 {{
-  "summary": "A clear 2-3 sentence executive summary in English explaining what is being procured, by whom, and the scope.",
-  "key_buyer_intent": "The primary objective or operational goal of the purchasing agency.",
-  "products_services": ["Array of specific goods, equipment, or service deliverables"],
-  "requirements": ["Array of mandatory supplier eligibility rules, business registrations, licenses, or experience criteria"],
+  "summary": "2-3 sentence executive summary in English",
+  "key_buyer_intent": "Primary operational goal of the purchasing agency",
+  "products_services": ["Specific goods, equipment, or service deliverables"],
+  "requirements": ["Mandatory supplier eligibility rules, business registrations, licenses, or experience criteria"],
   "bid_security": "Bank guarantee or bid security if mentioned, otherwise 'Not specified in notice'",
   "estimated_value": null,
-  "category_slug": "Choose single best fit slug from: it-telecom, construction-civil, medical-healthcare, consulting-services, office-furniture, vehicles-transport, electrical-energy, agriculture-water, security-cctv, education-training"
+  "category_slug": "Choose single best fit: it-telecom, construction-civil, medical-healthcare, consulting-services, office-furniture, vehicles-transport, electrical-energy, agriculture-water, security-cctv, education-training"
 }}
 """
 
@@ -97,25 +128,21 @@ Extract the following in strict raw JSON format with NO markdown wrapping:
                 payload = {
                     "model": model,
                     "messages": [
-                        {"role": "system", "content": "You are a JSON-only response bot. You must only output valid JSON."},
+                        {"role": "system", "content": "You are a JSON-only response bot. You must only output a valid JSON object."},
                         {"role": "user", "content": prompt}
                     ],
                     "temperature": 0.1,
                 }
-                response = requests.post(self.base_url, headers=headers, json=payload, timeout=25)
+                response = requests.post(self.base_url, headers=headers, json=payload, timeout=45)
                 if response.status_code == 200:
                     data = response.json()
-                    content = data["choices"][0]["message"]["content"].strip()
-                    if content.startswith("```json"):
-                        content = content[7:]
-                    if content.startswith("```"):
-                        content = content[3:]
-                    if content.endswith("```"):
-                        content = content[:-3]
-                    parsed = json.loads(content.strip())
-                    print(f"[OpenRouterExtractor] Successfully extracted using model: {model}")
-                    return TenderAIExtractionResult(**parsed)
+                    content = data["choices"][0]["message"]["content"]
+                    parsed = self._extract_json_block(content)
+                    if parsed and "summary" in parsed:
+                        print(f"[OpenRouterExtractor] 🤖 Extracted using model: {model}")
+                        return TenderAIExtractionResult(**parsed)
             except Exception as e:
+                print(f"[OpenRouterExtractor] Model {model} error: {e}")
                 continue
 
         return None
