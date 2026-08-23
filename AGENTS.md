@@ -36,7 +36,7 @@ Welcome, AI Agent! This document tracks the exact architectural decisions, compl
 - Applied migrations:
   - `database/migrations/00001_initial_schema.sql` (11 tables, triggers, GIN full-text search indexes).
   - `database/migrations/00002_rls_policies.sql` (RLS security policies & RBAC helpers `is_admin`, `is_moderator`).
-- Loaded seed taxonomies (`001_categories.sql`, `002_sources.sql`, `003_sample_tenders.sql`).
+- Loaded seed taxonomies (`001_categories.sql`, `002_sources.sql`; `003_sample_tenders.sql` was deleted 2026-08-23 — its fabricated demo tenders were never real notices).
 - Generated TypeScript types directly into [web/src/types/database.types.ts](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/web/src/types/database.types.ts).
 
 ### Milestone 03 & 04 + Expansion Pack — 6 Live Ingestion Adapters & Supabase Upsert

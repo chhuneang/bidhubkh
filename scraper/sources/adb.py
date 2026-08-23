@@ -58,41 +58,12 @@ class ADBCambodiaSource(BaseSource):
         except Exception as e:
             print(f"[ADBSource] API query note: {e}")
 
-        # Fallback to simulated live Cambodia ADB pipeline notices if endpoint structure changes
-        return [
-            RawTenderData(
-                source_code=self.code,
-                external_id="ADB-CAM-53240-002",
-                source_url="https://www.adb.org/projects/53240-002/main",
-                title="Cambodia Energy Transition Sector Project - Grid Solar & Substation Modernization",
-                description="Supply and installation of 50MW solar PV storage integration and high-voltage transmission lines in Kampong Chhnang and Pursat provinces.",
-                raw_payload={
-                    "id": "ADB-CAM-53240-002",
-                    "project_number": "53240-002",
-                    "published": "2026-08-15T00:00:00Z",
-                    "deadline": "2026-09-30T17:00:00Z",
-                    "sector": "Energy",
-                    "estimated_value": 3500000.0,
-                    "procurement_type": "International Competitive Bidding (ICB)"
-                }
-            ),
-            RawTenderData(
-                source_code=self.code,
-                external_id="ADB-CAM-48218-CW03",
-                source_url="https://www.adb.org/projects/48218-003/main",
-                title="Rural Roads Improvement Project III - Batch 3 Bridge and Drainage Works in Prey Veng",
-                description="Civil works for 12 pre-stressed reinforced concrete bridges and 45 box culverts along provincial road corridors in Prey Veng.",
-                raw_payload={
-                    "id": "ADB-CAM-48218-CW03",
-                    "project_number": "48218-003",
-                    "published": "2026-08-18T00:00:00Z",
-                    "deadline": "2026-09-22T15:00:00Z",
-                    "sector": "Transport",
-                    "estimated_value": 2100000.0,
-                    "procurement_type": "National Competitive Bidding (NCB)"
-                }
-            )
-        ]
+        # No fabricated fallbacks: ADB's tender listing is JS-rendered and its
+        # legacy /api/tenders path is gone (see tests/fixtures/adb_kh/), so when
+        # the API yields nothing we return an honest empty list rather than
+        # simulated notices.
+        print("[ADBSource] No server-rendered ADB notices available this run.")
+        return []
 
     def parse_and_normalize(self, raw: RawTenderData) -> NormalizedTenderData:
         payload = raw.raw_payload

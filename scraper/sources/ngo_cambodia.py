@@ -1,65 +1,111 @@
 """
 BidHubKH — Source #5: NGO & Development Portals Cambodia
-Collects grant-funded procurement opportunities, consultancy RFPs, and goods tenders from
-international and local NGOs operating across Cambodia.
+Collects grant-funded procurement opportunities, consultancy RFPs, and goods
+tenders advertised on ReliefWeb for organisations operating in Cambodia.
+
+ReliefWeb's v1 API is retired (HTTP 410) and its v2 API requires an *approved*
+appname registered at https://apidoc.reliefweb.int (anonymous or unregistered
+appnames receive HTTP 403 — see tests/fixtures/ngo_cambodia/
+reliefweb_api_403_appname_required.json). Set RELIEFWEB_APPNAME once approved;
+until then this adapter returns an honest empty list each run.
 """
 
+import os
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import List
+
+import requests
 
 from scraper.sources.base import BaseSource, NormalizedTenderData, RawTenderData
 
 
 class NGOCambodiaSource(BaseSource):
+    API_URL = "https://api.reliefweb.int/v2/jobs"
+    KEYWORD_FIELDS = ["tender", "invitation for bids", "request for proposal", "procurement", "ITB", "RFQ"]
+
     def __init__(self):
         super().__init__(
             code="ngo_cambodia",
             name="Cambodia NGO & Civil Society Development Portals",
             website_url="https://reliefweb.int/country/khm"
         )
+        self.appname = os.environ.get("RELIEFWEB_APPNAME", "bidhubkh")
+        self.headers = {
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+            ),
+            "Content-Type": "application/json",
+        }
+
+    def _request_body(self, limit: int = 50) -> dict:
+        return {
+            "filter": {
+                "operator": "AND",
+                "conditions": [
+                    {"field": "country.iso3", "value": ["KHM"]},
+                    {
+                        "operator": "OR",
+                        "conditions": [
+                            {"field": "title", "value": [kw], "operator": "OR"}
+                            for kw in self.KEYWORD_FIELDS
+                        ],
+                    },
+                ],
+            },
+            "fields": {
+                "include": ["id", "title", "url", "url_alias", "date", "source.shortname"]
+            },
+            "limit": limit,
+            "sort": ["date.created:desc"],
+        }
 
     def fetch_raw(self) -> List[RawTenderData]:
-        raw_items: List[RawTenderData] = []
-        
-        sample_notices = [
-            {
-                "id": "NGO-KH-2026-041",
-                "title": "RFP-CW-2026-03 - Construction of 18 Deep Groundwater Community Boreholes with Solar Pumps in Kampong Thom",
-                "organization": "WaterAid / Plan International Cambodia",
-                "description": "Call for sealed technical and financial bids for the hydrogeological drilling, casing, and installation of 18 deep community water boreholes equipped with solar submersible pump stations and communal tap stands in Stoung and Prasat Balangk districts.",
-                "deadline": (datetime.now(timezone.utc) + timedelta(days=25)).isoformat(),
-                "published": (datetime.now(timezone.utc) - timedelta(days=2)).isoformat(),
-                "budget": 145000.0,
-                "currency": "USD",
-                "url": "https://reliefweb.int/job/cambodia/wateraid-rfp-boreholes-2026"
-            },
-            {
-                "id": "NGO-KH-2026-042",
-                "title": "ITB-EDU-2026-012 - Supply & Distribution of 3,200 Early Grade STEM Learning Kits and Teacher Tablets",
-                "organization": "Room to Read Cambodia",
-                "description": "Room to Read Cambodia invites qualified education technology distributors and local printers to bid for the assembly, packaging, and provincial school delivery of 3,200 supplementary STEM science kits and 180 teacher tablet computers.",
-                "deadline": (datetime.now(timezone.utc) + timedelta(days=19)).isoformat(),
-                "published": (datetime.now(timezone.utc) - timedelta(days=1)).isoformat(),
-                "budget": 98000.0,
-                "currency": "USD",
-                "url": "https://reliefweb.int/job/cambodia/roomtoread-itb-stem-kits"
-            }
-        ]
-
-        for notice in sample_notices:
-            raw_items.append(
-                RawTenderData(
-                    external_id=notice["id"],
-                    source_code=self.code,
-                    source_url=notice["url"],
-                    title=notice["title"],
-                    description=notice["description"],
-                    raw_payload=notice
-                )
+        try:
+            resp = requests.post(
+                f"{self.API_URL}?appname={self.appname}",
+                json=self._request_body(),
+                headers=self.headers,
+                timeout=30,
             )
+            if resp.status_code == 200:
+                rows = resp.json().get("data", []) or []
+                raw_items: List[RawTenderData] = []
+                for row in rows:
+                    fields = row.get("fields", {})
+                    ext_id = str(fields.get("id") or row.get("id") or "").strip()
+                    title = (fields.get("title") or "").strip()
+                    if not ext_id or not title:
+                        continue
+                    created = (fields.get("date") or {}).get("created")
+                    raw_items.append(
+                        RawTenderData(
+                            source_code=self.code,
+                            external_id=f"NGO-KH-RW-{ext_id}",
+                            source_url=fields.get("url") or fields.get("url_alias") or self.website_url,
+                            title=title,
+                            description=None,
+                            raw_payload={
+                                "id": f"NGO-KH-RW-{ext_id}",
+                                "title": title,
+                                "url": fields.get("url"),
+                                "published": created,
+                                "source": (fields.get("source") or {}).get("shortname"),
+                            },
+                        )
+                    )
+                if raw_items:
+                    return raw_items
+            elif resp.status_code == 403:
+                print("[NGOCambodiaSource] ReliefWeb rejected the appname "
+                      f"'{self.appname}'. Register one at https://apidoc.reliefweb.int "
+                      "and set RELIEFWEB_APPNAME.")
+        except Exception as e:
+            print(f"[NGOCambodiaSource] ReliefWeb query note: {e}")
 
-        return raw_items
+        print("[NGOCambodiaSource] No ReliefWeb notices available this run.")
+        return []
 
     def parse_and_normalize(self, raw: RawTenderData) -> NormalizedTenderData:
         payload = raw.raw_payload
@@ -71,17 +117,19 @@ class NGOCambodiaSource(BaseSource):
         slug_prefix = re.sub(r'[\s]+', '-', clean_title.strip())[:60]
         slug = f"ngo-kh-{slug_prefix}-{external_id.lower()[-6:]}"
 
+        # Dates come from the payload only; ReliefWeb job ads rarely carry a
+        # closing date, so deadline stays None instead of being invented.
         deadline = None
         if payload.get("deadline"):
             try:
-                deadline = datetime.fromisoformat(payload["deadline"].replace("Z", "+00:00"))
+                deadline = datetime.fromisoformat(str(payload["deadline"]).replace("Z", "+00:00"))
             except Exception:
-                deadline = datetime.now(timezone.utc) + timedelta(days=20)
+                deadline = None
 
         published_at = datetime.now(timezone.utc)
         if payload.get("published"):
             try:
-                published_at = datetime.fromisoformat(payload["published"].replace("Z", "+00:00"))
+                published_at = datetime.fromisoformat(str(payload["published"]).replace("Z", "+00:00"))
             except Exception:
                 pass
 
@@ -100,21 +148,17 @@ class NGOCambodiaSource(BaseSource):
             slug=slug,
             description=desc,
             summary=desc[:240] + "..." if len(desc) > 240 else desc,
-            organization_slug="ngo-cambodia",
+            organization_slug=(payload.get("source") or "ngo-cambodia").lower().replace(" ", "-"),
             category_slug=cat_slug,
-            location="Kampong Thom & Multi-Provincial, Cambodia",
+            location="Cambodia",
             published_at=published_at,
             deadline=deadline,
             estimated_value=payload.get("budget"),
             currency=payload.get("currency", "USD"),
             procurement_method="NGO Competitive Request for Quotation (RFQ)",
             eligibility="Registered Cambodian Businesses with MoC & GDT Tax Compliance",
-            products_services=["Groundwater Borehole Drilling", "Submersible Solar Pumps", "STEM Education Kits"],
-            requirements=[
-                "Valid Cambodian Ministry of Commerce (MoC) Certificate",
-                "GDT Tax Patent & VAT Certificate",
-                "Past performance references for at least 2 NGO projects in Cambodia"
-            ],
+            products_services=payload.get("products_services", []),
+            requirements=payload.get("requirements", []),
             original_url=raw.source_url,
             confidence_score=94
         )

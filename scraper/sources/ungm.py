@@ -5,77 +5,74 @@ including UNDP, UNICEF, WHO, WFP, UNOPS, and FAO.
 """
 
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import List
+
+import requests
 
 from scraper.sources.base import BaseSource, NormalizedTenderData, RawTenderData
 
 
 class UNGMCambodiaSource(BaseSource):
+    PUBLIC_NOTICES_URL = "https://www.ungm.org/api/public/notices"
+
     def __init__(self):
         super().__init__(
             code="ungm",
             name="UN Global Marketplace (UNGM) Cambodia",
             website_url="https://www.ungm.org"
         )
+        self.headers = {
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+            ),
+            "Accept": "application/json",
+        }
 
     def fetch_raw(self) -> List[RawTenderData]:
-        """
-        Fetches official UN notices designated for Cambodia.
-        Includes live API queries and authentic UNGM Cambodia notices.
-        """
-        raw_items: List[RawTenderData] = []
-        
-        # Authentic UNGM Cambodia Procurement Packages
-        sample_notices = [
-            {
-                "id": "UNGM-KH-2026-091",
-                "title": "UNDP/KHM/RFP/2026/08 - Provision of Solar Mini-Grid Systems for Rural Community Health Centers",
-                "agency": "UNDP Cambodia",
-                "description": "United Nations Development Programme (UNDP) Cambodia invites eligible renewable energy engineering contractors to submit proposals for the turnkey design, supply, installation, and 3-year maintenance of solar photovoltaic mini-grid power systems across 12 rural health centers in Battambang and Siem Reap provinces.",
-                "deadline": (datetime.now(timezone.utc) + timedelta(days=28)).isoformat(),
-                "published": (datetime.now(timezone.utc) - timedelta(days=2)).isoformat(),
-                "budget": 320000.0,
-                "currency": "USD",
-                "url": "https://www.ungm.org/Public/Notice/UNGM-KH-2026-091"
-            },
-            {
-                "id": "UNGM-KH-2026-092",
-                "title": "UNICEF-KHM-ITB-2026-015 - Long Term Agreement (LTA) for Supply of Nutrition Kits and Specialized Medical Scales",
-                "agency": "UNICEF Cambodia",
-                "description": "UNICEF Cambodia Office is seeking qualified medical equipment suppliers for an initial 24-month Long Term Agreement for the supply and distribution of early childhood nutrition monitoring kits, digital infant scales, and height boards across provincial health departments.",
-                "deadline": (datetime.now(timezone.utc) + timedelta(days=21)).isoformat(),
-                "published": (datetime.now(timezone.utc) - timedelta(days=1)).isoformat(),
-                "budget": 185000.0,
-                "currency": "USD",
-                "url": "https://www.ungm.org/Public/Notice/UNGM-KH-2026-092"
-            },
-            {
-                "id": "UNGM-KH-2026-093",
-                "title": "WHO-KHM-2026-RFP-004 - National Laboratory Information Management System (LIMS) Digital Modernization",
-                "agency": "World Health Organization (WHO) Cambodia",
-                "description": "World Health Organization Representative Office in Cambodia requires software engineering consultancy services to deploy and integrate an open-source Laboratory Information Management System (LIMS) connecting the National Institute of Public Health (NIPH) with 14 provincial diagnostic laboratories.",
-                "deadline": (datetime.now(timezone.utc) + timedelta(days=35)).isoformat(),
-                "published": (datetime.now(timezone.utc) - timedelta(days=3)).isoformat(),
-                "budget": 240000.0,
-                "currency": "USD",
-                "url": "https://www.ungm.org/Public/Notice/UNGM-KH-2026-093"
-            }
-        ]
+        """Attempts the public notices endpoint; returns [] when unavailable.
 
-        for notice in sample_notices:
-            raw_items.append(
-                RawTenderData(
-                    external_id=notice["id"],
-                    source_code=self.code,
-                    source_url=notice["url"],
-                    title=notice["title"],
-                    description=notice["description"],
-                    raw_payload=notice
-                )
+        UNGM's public site is an Angular SPA and every known anonymous JSON API
+        path currently redirects to /API/GenericError (see tests/fixtures/
+        ungm/api_probe_evidence.txt). We still probe the endpoint each run so a
+        future API change is picked up automatically — but we never substitute
+        simulated notices for real ones.
+        """
+        try:
+            resp = requests.get(
+                self.PUBLIC_NOTICES_URL,
+                params={"pageIndex": 1, "pageSize": 50},
+                headers=self.headers,
+                timeout=15,
             )
+            if resp.status_code == 200:
+                payload = resp.json()
+                rows = payload.get("data") or payload.get("notices") or []
+                raw_items: List[RawTenderData] = []
+                for row in rows:
+                    ext_id = str(row.get("id") or row.get("noticeId") or "").strip()
+                    title = (row.get("title") or row.get("description")).strip() if (row.get("title") or row.get("description")) else ""
+                    if not ext_id or not title:
+                        continue
+                    raw_items.append(
+                        RawTenderData(
+                            source_code=self.code,
+                            external_id=f"UNGM-{ext_id}",
+                            source_url=row.get("url") or f"https://www.ungm.org/Public/Notice/{ext_id}",
+                            title=title,
+                            description=row.get("description"),
+                            raw_payload=row,
+                        )
+                    )
+                if raw_items:
+                    return raw_items
+        except Exception as e:
+            print(f"[UNGMSource] Public API probe note: {e}")
 
-        return raw_items
+        print("[UNGMSource] No server-rendered UNGM notices available this run "
+              "(public site is a client-side SPA).")
+        return []
 
     def parse_and_normalize(self, raw: RawTenderData) -> NormalizedTenderData:
         payload = raw.raw_payload
@@ -92,9 +89,9 @@ class UNGMCambodiaSource(BaseSource):
         deadline = None
         if payload.get("deadline"):
             try:
-                deadline = datetime.fromisoformat(payload["deadline"].replace("Z", "+00:00"))
+                deadline = datetime.fromisoformat(str(payload["deadline"]).replace("Z", "+00:00"))
             except Exception:
-                deadline = datetime.now(timezone.utc) + timedelta(days=25)
+                deadline = None
 
         # Published date
         published_at = datetime.now(timezone.utc)
@@ -131,12 +128,8 @@ class UNGMCambodiaSource(BaseSource):
             currency=payload.get("currency", "USD"),
             procurement_method="UN Competitive Request for Proposals (RFP / ITB)",
             eligibility="Registered UNGM Vendors (Level 1 / Level 2)",
-            products_services=["Solar PV Mini-Grids", "Medical Diagnostic Scales", "LIMS Software Implementation"],
-            requirements=[
-                "Valid UNGM Vendor Registration Number",
-                "Proven track record of minimum 3 similar UN/donor contracts in SE Asia",
-                "3-year manufacturer warranty and on-site spare parts availability in Cambodia"
-            ],
+            products_services=payload.get("products_services", []),
+            requirements=payload.get("requirements", []),
             original_url=raw.source_url,
             confidence_score=96
         )

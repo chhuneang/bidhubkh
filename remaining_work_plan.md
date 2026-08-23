@@ -132,6 +132,49 @@ documentation claims and the code, plus production launch.
 
 ---
 
+# Source-content verification & fabrication purge (2026-08-23, second sweep)
+
+Owner asked to verify every tender's external link against what BidHubKH
+displays. Result: **all 7 remaining public tenders failed verification** —
+none of their content exists on any official portal:
+
+| Row | Verdict |
+|---|---|
+| ADB-CAM-48218-CW03 | Project 48218 is **Nepal's** Rural Connectivity project; Cambodian RRIP III is 42334-018 |
+| ADB-CAM-53240-002 | Project 53240 is GMS Cross-Border **Livestock** (-002 = Lao PDR), not energy |
+| MOH/HSSP2/2026/G-045 | No trace anywhere; cited page (MPWT documents) has zero matches |
+| MoEYS/STEPCam/2026/G-009 | STEPCam is UNESCO/GPE teacher-ed programme; no such tender |
+| MPWT/RN5/2026/CW-028 | No 2026 NR5 IFB exists; JICA Phase III already contracted (>51% done Apr 2026) |
+| MEF/GDPP/NCB/2026/G-014 | No trace; "GDPP" is not a known MEF procurement unit code |
+| EDC NCB-2026-088 | URL serves EDC's apology/error page with HTTP 200 (soft-404) |
+
+All 7 rejected with evidence annotations (DB now: 41 rows, all rejected,
+0 public). Raw-payload forensics showed they were emitted **today** by
+`fetch_raw()` fallbacks inside the adapters themselves.
+
+## Fabrication purge in scraper sources
+
+1. `adb.py` — "simulated notices" fallback deleted → honest `[]`
+   (API is dead: `tests/fixtures/adb_kh/api_tenders_404.html`).
+2. `mef.py` — `_get_active_ministry_tenders()` curated generator + invented
+   `days_ahead` deadlines deleted → scrape-only, `[]` on failure.
+3. `state_utilities.py` — hardcoded `sample_notices` replaced with a REAL EDC
+   listing scraper (`/procurement_page/procurement`, `h3.procure-title`);
+   verified live: returns 10 genuine notices with real detail URLs.
+4. `ungm.py` — three invented UN notices deleted → probes public endpoint,
+   `[]` until UNGM exposes server-rendered data (SPA documented).
+5. `ngo_cambodia.py` — two invented NGO tenders replaced with a REAL ReliefWeb
+   v2 client; blocked on owner registering an appname at
+   https://apidoc.reliefweb.int then setting `RELIEFWEB_APPNAME` (v2 rejects
+   unregistered appnames with 403; v1 is retired with 410).
+6. `database/seed/003_sample_tenders.sql` deleted (fabricated demo rows);
+   stale `fetch_raw_output_snapshot.json` fixtures deleted; tests rewritten so
+   every adapter test asserts failure→`[]` and parsers run against captured or
+   clearly-labelled-synthetic fixtures.
+
+Rule going forward: **a source adapter may only emit data fetched from its
+official source this run**. Empty is acceptable; invented is not.
+
 # Post-M16 findings & decisions (2026-08-23)
 
 Milestone 16 closed with commits `d48b830` (ruff), `9ddf26d` (test harness:
@@ -147,7 +190,11 @@ Milestone 16 closed with commits `d48b830` (ruff), `9ddf26d` (test harness:
    `noticedate` ("17-Aug-2026"), not `proc_notice_date`; parse branch added.
 3. **Dispatcher TypeError** when a matched tender had no title.
 
-## Awaiting owner decision — polluted live data
+## Polluted live data (RESOLVED 2026-08-23)
+
+Owner approved cleanup; executed the same day: all 27 non-Cambodian WB rows
+rejected, then the 7 rows above after content verification. Reference SQL kept
+for auditability:
 
 All 27 `world_bank_kh` tenders currently `published`+`approved` are
 non-Cambodian (Ethiopia 4, Mali 3, West Bank and Gaza 3, Sri Lanka 2,

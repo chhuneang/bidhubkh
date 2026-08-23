@@ -1,123 +1,141 @@
-"""Fixture-based tests for scraper/sources/adb.py.
+"""Tests for scraper/sources/adb.py.
 
-Fixtures captured 2026-08-23:
-- fetch_raw_output_snapshot.json: the adapter's ACTUAL fetch_raw() output. Its live
-  API request (https://www.adb.org/api/tenders?country=CAM&type=all&page=0) returned
-  HTTP 404, so production currently always ingests the hardcoded fallback items —
-  this snapshot freezes exactly those.
-- api_tenders_404.html: verbatim excerpt of the real 404 body (drift evidence).
-- tenders_listing.html: the REAL current ADB tender listing page (HTTP 200 at
-  https://www.adb.org/projects/tenders), documenting where the data actually lives.
+Fixtures (drift evidence, captured 2026-08-23):
+- api_tenders_404.html: verbatim excerpt of the HTTP 404 body returned by the
+  legacy /api/tenders endpoint.
+- tenders_listing.html: the real ADB tender listing page, which is
+  JS-rendered and therefore not server-scrapeable.
+
+The adapter's former "simulated notices" fallback was removed on 2026-08-23:
+it fabricated two ADB tenders (one citing a Nepali project number) that were
+ingested into production. fetch_raw() must now return [] whenever the API
+yields nothing.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime
+from unittest.mock import MagicMock, patch
 
-from conftest import load_json, load_text, raw_items_from_snapshot
+from conftest import load_text
 
 from scraper.sources.adb import ADBCambodiaSource
-
-SNAPSHOT = "adb_kh/fetch_raw_output_snapshot.json"
-
-
-def normalized_all():
-    source = ADBCambodiaSource()
-    return [source.parse_and_normalize(r) for r in raw_items_from_snapshot(load_json(SNAPSHOT))]
+from scraper.sources.base import RawTenderData
 
 
-class TestFetchRawDrift:
+def _synthetic_raw(title="Synthetic grid solar modernization works package", **payload_overrides):
+    payload = {
+        "id": "ADB-CAM-SYNTH-001",
+        "project_number": "99999-001",
+        "published": "2026-08-15T00:00:00Z",
+        "deadline": "2026-09-30T17:00:00Z",
+        "sector": "Energy",
+        "estimated_value": 3500000.0,
+        "procurement_type": "International Competitive Bidding (ICB)",
+    }
+    payload.update(payload_overrides)
+    return RawTenderData(
+        source_code="adb_kh",
+        external_id=payload["id"],
+        source_url=f"https://www.adb.org/projects/{payload['project_number']}/main",
+        title=title,
+        description="Synthetic description for parser coverage.",
+        raw_payload=payload,
+    )
+
+
+class TestDriftEvidence:
     def test_api_endpoint_returns_error_page_in_real_capture(self):
         body = load_text("adb_kh/api_tenders_404.html")
-        # Verbatim head of the HTTP 404 body returned by /api/tenders on 2026-08-23.
         assert "We are sorry but the page you are looking for" in body[:1200]
         assert "404" in body or "no longer available" in body
-
-    def test_snapshot_items_are_the_documented_fallback_ids(self):
-        # Because the API is dead, fetch_raw() can only ever produce these two items.
-        items = raw_items_from_snapshot(load_json(SNAPSHOT))
-        assert [i.external_id for i in items] == ["ADB-CAM-53240-002", "ADB-CAM-48218-CW03"]
 
     def test_real_listing_page_is_alive_and_lists_tenders(self):
         html = load_text("adb_kh/tenders_listing.html")
         assert "/projects/tenders" in html
 
 
+class TestFetchRaw:
+    def setup_method(self):
+        self.source = ADBCambodiaSource()
+
+    def _patch_get(self, status=404, items=None):
+        resp = MagicMock()
+        resp.status_code = status
+        if status == 200:
+            resp.json.return_value = {"items": items or []}
+        with patch("scraper.sources.adb.requests.get", return_value=resp) as mock_get:
+            yield mock_get
+
+    def test_api_404_returns_empty_list_not_fabricated_notices(self):
+        for _ in self._patch_get(status=404):
+            assert self.source.fetch_raw() == []
+
+    def test_api_200_with_no_items_returns_empty_list(self):
+        for _ in self._patch_get(status=200, items=[]):
+            assert self.source.fetch_raw() == []
+
+    def test_network_error_returns_empty_list(self):
+        with patch("scraper.sources.adb.requests.get", side_effect=ConnectionError("offline")):
+            assert self.source.fetch_raw() == []
+
+
 class TestParseAndNormalize:
     def setup_method(self):
-        self.results = {n.external_id: n for n in normalized_all()}
-
-    def test_titles_are_never_empty(self):
-        assert all(n.title.strip() for n in self.results.values())
+        self.source = ADBCambodiaSource()
 
     def test_estimated_value_extracted_from_payload(self):
-        assert self.results["ADB-CAM-53240-002"].estimated_value == 3500000.0
-        assert self.results["ADB-CAM-48218-CW03"].estimated_value == 2100000.0
+        n = self.source.parse_and_normalize(_synthetic_raw())
+        assert n.estimated_value == 3500000.0
 
     def test_published_parsed_to_utc_aware_datetime(self):
-        solar = self.results["ADB-CAM-53240-002"]
-        assert isinstance(solar.published_at, datetime)
-        assert solar.published_at.utcoffset() == timedelta(0)
-        assert solar.published_at.replace(tzinfo=None) == datetime(2026, 8, 15, 0, 0, 0)
+        n = self.source.parse_and_normalize(_synthetic_raw())
+        assert n.published_at.utcoffset() is not None
+        assert n.published_at.replace(tzinfo=None) == datetime(2026, 8, 15, 0, 0, 0)
 
     def test_deadline_parsed_to_utc_aware_datetime(self):
-        solar = self.results["ADB-CAM-53240-002"]
-        assert isinstance(solar.deadline, datetime)
-        assert solar.deadline.utcoffset() == timedelta(0)
-        assert solar.deadline.replace(tzinfo=None) == datetime(2026, 9, 30, 17, 0, 0)
+        n = self.source.parse_and_normalize(_synthetic_raw())
+        assert n.deadline.replace(tzinfo=None) == datetime(2026, 9, 30, 17, 0, 0)
 
     def test_reference_number_uses_project_number(self):
-        assert self.results["ADB-CAM-53240-002"].reference_number == "53240-002"
-        assert self.results["ADB-CAM-48218-CW03"].reference_number == "48218-003"
+        n = self.source.parse_and_normalize(_synthetic_raw())
+        assert n.reference_number == "99999-001"
 
     def test_slug_is_hyphenated_lowercase_with_external_id_suffix(self):
-        solar = self.results["ADB-CAM-53240-002"]
+        n = self.source.parse_and_normalize(_synthetic_raw())
         # The title contains " - " which collapses to "--" after sanitisation;
         # pinned verbatim so any slug-algorithm change surfaces here.
-        assert solar.slug.startswith("cambodia-energy-transition-sector-project---grid-solar")
-        assert solar.slug.endswith("-ADB-CAM-53240-002")
-        title_part = solar.slug.rsplit("-ADB-", 1)[0]
-        assert " " not in title_part
-        assert title_part == title_part.lower()
+        assert n.slug.startswith("synthetic-grid-solar")
+        assert n.slug.endswith("-ADB-CAM-SYNTH-001")
+        title_part = n.slug.rsplit("-ADB-", 1)[0]
+        assert " " not in title_part and title_part == title_part.lower()
 
     def test_category_energy_branch(self):
-        assert self.results["ADB-CAM-53240-002"].category_slug == "electrical-energy"
+        n = self.source.parse_and_normalize(_synthetic_raw())
+        assert n.category_slug == "electrical-energy"
 
     def test_category_defaults_to_construction_civil_for_works(self):
-        # Bridge/drainage title matches none of energy/it/consulting keywords.
-        assert self.results["ADB-CAM-48218-CW03"].category_slug == "construction-civil"
+        # NB: the classifier's substring matching is documented as quirky
+        # (e.g. "it" matches inside unrelated words), so this title deliberately
+        # avoids such words to pin the intended default branch.
+        n = self.source.parse_and_normalize(
+            _synthetic_raw("Culvert and road pavement works package",
+                           id="ADB-CAM-SYNTH-002"))
+        assert n.category_slug == "construction-civil"
 
     def test_procurement_method_from_payload_type(self):
-        assert (
-            self.results["ADB-CAM-53240-002"].procurement_method
-            == "International Competitive Bidding (ICB)"
-        )
-        assert (
-            self.results["ADB-CAM-48218-CW03"].procurement_method
-            == "National Competitive Bidding (NCB)"
-        )
-
-    def test_currency_hardcoded_usd(self):
-        assert all(n.currency == "USD" for n in self.results.values())
-
-    def test_confidence_score_is_96(self):
-        assert all(n.confidence_score == 96 for n in self.results.values())
+        n = self.source.parse_and_normalize(_synthetic_raw())
+        assert n.procurement_method == "International Competitive Bidding (ICB)"
 
     def test_missing_dates_fall_back_to_now_and_none(self):
-        source = ADBCambodiaSource()
-        base = raw_items_from_snapshot(load_json(SNAPSHOT))[0]
-        stripped = base.model_copy(deep=True)
-        stripped.raw_payload.pop("published", None)
-        stripped.raw_payload.pop("deadline", None)
-
         before = datetime.utcnow()
-        result = source.parse_and_normalize(stripped)
+        n = self.source.parse_and_normalize(
+            _synthetic_raw(published=None, deadline=None))
         after = datetime.utcnow()
-
-        assert result.deadline is None
-        assert before <= result.published_at.replace(tzinfo=None) <= after
+        assert n.deadline is None
+        assert before <= n.published_at.replace(tzinfo=None) <= after
 
     def test_malformed_deadline_string_is_dropped_silently(self):
-        source = ADBCambodiaSource()
-        base = raw_items_from_snapshot(load_json(SNAPSHOT))[0]
-        broken = base.model_copy(deep=True)
-        broken.raw_payload["deadline"] = "not-a-date"
-        assert source.parse_and_normalize(broken).deadline is None
+        n = self.source.parse_and_normalize(_synthetic_raw(deadline="not-a-date"))
+        assert n.deadline is None
+
+    def test_currency_hardcoded_usd(self):
+        assert self.source.parse_and_normalize(_synthetic_raw()).currency == "USD"

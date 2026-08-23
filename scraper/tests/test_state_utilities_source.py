@@ -1,25 +1,30 @@
-"""Fixture-based tests for scraper/sources/state_utilities.py.
+"""Tests for scraper/sources/state_utilities.py.
 
 Fixtures captured 2026-08-23 (all HTTP 200, real pages):
-- edc_procurement_list.html + edc_notice_detail_830.html: live EDC procurement pages.
-- ppwsa_bidding_en.html: live PPWSA bidding page.
-The adapter itself performs NO network call — fetch_raw() returns hardcoded payloads,
-frozen verbatim in fetch_raw_output_snapshot.json (labelled as such, not scraped).
+- edc_procurement_list.html + edc_notice_detail_830.html: live EDC procurement
+  pages — the listing IS server-rendered, so fetch_raw() now scrapes it for real.
+- ppwsa_bidding_en.html: live PPWSA bidding page (parser not yet implemented;
+  documented, not faked).
+
+The adapter's former hardcoded `sample_notices` (two invented EDC/PPWSA awards
+with deadlines computed off the clock) were removed on 2026-08-23 after live
+checks showed their URLs are EDC error pages. Any scrape failure yields [].
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
+from unittest.mock import MagicMock, patch
 
-from conftest import load_json, load_text, raw_items_from_snapshot
+from conftest import load_text
 
 from scraper.sources.base import RawTenderData
 from scraper.sources.state_utilities import StateUtilitiesSource
 
-SNAPSHOT = "state_utilities/fetch_raw_output_snapshot.json"
 
-
-def normalized_all():
-    source = StateUtilitiesSource()
-    return [source.parse_and_normalize(r) for r in raw_items_from_snapshot(load_json(SNAPSHOT))]
+def _mock_response(status=200, html=""):
+    resp = MagicMock()
+    resp.status_code = status
+    resp.text = html
+    return resp
 
 
 class TestFixtureIntegrity:
@@ -35,110 +40,108 @@ class TestFixtureIntegrity:
         html = load_text("state_utilities/ppwsa_bidding_en.html")
         assert "bidding" in html.lower() or "tender" in html.lower()
 
-    def test_snapshot_holds_the_two_hardcoded_utility_notices(self):
-        snapshot = load_json(SNAPSHOT)
-        ids = [i["external_id"] for i in snapshot["items"]]
-        assert ids == ["EDC-KH-2026-NCB-088", "PPWSA-KH-2026-W-019"]
+
+class TestFetchRaw:
+    def setup_method(self):
+        self.source = StateUtilitiesSource()
+
+    def test_scrapes_real_captured_edc_listing(self):
+        html = load_text("state_utilities/edc_procurement_list.html")
+        with patch("scraper.sources.state_utilities.requests.get",
+                   return_value=_mock_response(200, html)):
+            items = self.source.fetch_raw()
+        assert len(items) > 0
+        # Every item traces to a real detail URL from the captured page...
+        assert all("/procurement_page/detail/" in i.source_url for i in items)
+        # ...and carries no fabricated fixed ids.
+        assert all(i.external_id.startswith("EDC-KH-DETAIL-") for i in items)
+        # Titles are the on-page <h3.procure-title> texts (Khmer included).
+        assert all(i.title.strip() for i in items)
+
+    def test_no_duplicate_urls_in_scrape_output(self):
+        html = load_text("state_utilities/edc_procurement_list.html")
+        with patch("scraper.sources.state_utilities.requests.get",
+                   return_value=_mock_response(200, html)):
+            items = self.source.fetch_raw()
+        urls = [i.source_url for i in items]
+        assert len(urls) == len(set(urls))
+
+    def test_network_error_returns_empty_list_not_samples(self):
+        with patch("scraper.sources.state_utilities.requests.get",
+                   side_effect=ConnectionError("offline")):
+            assert self.source.fetch_raw() == []
+
+    def test_error_page_status_returns_empty_list(self):
+        with patch("scraper.sources.state_utilities.requests.get",
+                   return_value=_mock_response(200, "<html><body>error</body></html>")):
+            assert self.source.fetch_raw() == []
 
 
 class TestParseAndNormalize:
     def setup_method(self):
-        self.results = {n.external_id: n for n in normalized_all()}
         self.source = StateUtilitiesSource()
 
-    def test_titles_non_empty(self):
-        assert all(n.title.strip() for n in normalized_all())
-
-    def test_golden_slug_format(self):
-        n = self.results["EDC-KH-2026-NCB-088"]
-        # slug = "util-kh-" + sanitized title[:60] + "-" + external_id[-6:]
-        assert n.slug == (
-            "util-kh-edcncb2026g-088---supply-and-delivery-of-22kv-medium-voltage-cb-088"
-        )
-
-    def test_deadline_parsed_to_tz_aware_datetime(self):
-        n = self.results["PPWSA-KH-2026-W-019"]
-        assert isinstance(n.deadline, datetime)
-        assert n.deadline.utcoffset() == timedelta(0)
-        payload_deadline = datetime.fromisoformat(
-            load_json(SNAPSHOT)["items"][1]["raw_payload"]["deadline"]
-        )
-        assert n.deadline == payload_deadline
-
-    def test_published_at_parsed_from_payload(self):
-        n = self.results["EDC-KH-2026-NCB-088"]
-        payload_published = datetime.fromisoformat(
-            load_json(SNAPSHOT)["items"][0]["raw_payload"]["published"]
-        )
-        assert n.published_at == payload_published
-
-    def test_summary_truncation_boundary(self):
-        edc, ppwsa = normalized_all()
-        assert edc.summary.endswith("...")
-        assert len(edc.summary) == 243
-        assert len(ppwsa.summary) == 243
-
-    def test_estimated_value_and_currency_passthrough(self):
-        assert self.results["EDC-KH-2026-NCB-088"].estimated_value == 650000.0
-        assert self.results["PPWSA-KH-2026-W-019"].estimated_value == 820000.0
-        assert all(n.currency == "USD" for n in normalized_all())
-
-    def test_organization_slug_derived_from_title(self):
-        orgs = {n.external_id: n.organization_slug for n in normalized_all()}
-        assert orgs["EDC-KH-2026-NCB-088"] == "edc-cambodia"
-        assert orgs["PPWSA-KH-2026-W-019"] == "ppwsa-cambodia"
-
-    def test_organization_slug_defaults_to_ppwsa_when_title_has_no_edc(self):
-        raw = self._synthetic("Telecom Cambodia fibre rollout framework")
-        assert self.source.parse_and_normalize(raw).organization_slug == "ppwsa-cambodia"
-
-    def test_category_branches(self):
-        cats = {n.external_id: n.category_slug for n in normalized_all()}
-        assert cats["EDC-KH-2026-NCB-088"] == "energy-renewables"  # power cable/transformer
-        assert cats["PPWSA-KH-2026-W-019"] == "water-sanitation"  # water pipes
-
-    def test_default_category_is_construction_infrastructure(self):
-        raw = self._synthetic("Headquarters office renovation works")
-        result = self.source.parse_and_normalize(raw)
-        assert result.category_slug == "construction-infrastructure"
-
-    def test_absent_deadline_key_leaves_deadline_none(self):
-        # The now+30d fallback only fires when the key exists but fails to parse.
-        raw = self._synthetic("Smart meter pilot procurement")
-        raw.raw_payload.pop("deadline", None)
-        assert self.source.parse_and_normalize(raw).deadline is None
-
-    def test_malformed_deadline_falls_back_to_now_plus_30_days(self):
-        raw = self._synthetic("Transformer supply framework")
-        raw.raw_payload["deadline"] = "next Tuesday"
-        before = datetime.now(timezone.utc)
-        result = self.source.parse_and_normalize(raw)
-        after = datetime.now(timezone.utc)
-        assert result.deadline is not None
-        assert before + timedelta(days=30) <= result.deadline <= after + timedelta(days=30)
-
-    def test_constants_confidence_location_requirements(self):
-        for n in normalized_all():
-            assert n.confidence_score == 97
-            assert n.location == "Phnom Penh & National Grid, Cambodia"
-            assert n.requirements  # static certification requirements attached
-
-    def _synthetic(self, title: str) -> RawTenderData:
+    def _synthetic(self, title="Synthetic transformer supply notice", url=None, **payload_extra):
+        payload = {
+            "id": "EDC-KH-DETAIL-999",
+            "title": title,
+            "url": url or "https://www.edc.com.kh/procurement_page/detail/999",
+        }
+        payload.update(payload_extra)
         return RawTenderData(
             source_code="state_utilities",
-            external_id="UTIL-KH-TEST-01",
-            source_url="https://www.edc.com.kh/procurement/test",
+            external_id=payload["id"],
+            source_url=payload["url"],
             title=title,
-            description="x",
-            raw_payload={
-                "id": "UTIL-KH-TEST-01",
-                "title": title,
-                "utility": "Test Utility",
-                "description": "x",
-                "deadline": None,
-                "published": None,
-                "budget": None,
-                "currency": "USD",
-                "url": "https://www.edc.com.kh/procurement/test",
-            },
+            description=None,
+            raw_payload=payload,
         )
+
+    def test_golden_slug_format(self):
+        n = self.source.parse_and_normalize(
+            self._synthetic(title="EDC/NCB/2026/G-001 - Cable Supply"))
+        # slug = "util-kh-" + sanitized title[:60] + "-" + external_id[-6:]
+        assert n.slug.endswith("-il-999")
+        assert n.slug.startswith("util-kh-edcncb2026g-001---cable-supply")
+
+    def test_deadline_none_when_payload_has_no_dates(self):
+        # Scraped EDC cards expose no machine-readable deadline; none is invented.
+        n = self.source.parse_and_normalize(self._synthetic())
+        assert n.deadline is None
+        assert n.estimated_value is None
+
+    def test_malformed_deadline_is_dropped_not_faked(self):
+        n = self.source.parse_and_normalize(self._synthetic(deadline="next Tuesday"))
+        assert n.deadline is None
+
+    def test_published_defaults_to_now(self):
+        before = datetime.now(timezone.utc)
+        n = self.source.parse_and_normalize(self._synthetic())
+        after = datetime.now(timezone.utc)
+        assert before <= n.published_at <= after
+
+    def test_organization_slug_follows_source_url(self):
+        edc = self.source.parse_and_normalize(self._synthetic())
+        assert edc.organization_slug == "edc-cambodia"
+        ppwsa = self.source.parse_and_normalize(
+            self._synthetic(title="Water main works", url="https://www.ppwsa.com.kh/t/1"))
+        assert ppwsa.organization_slug == "ppwsa-cambodia"
+
+    def test_category_branches(self):
+        energy = self.source.parse_and_normalize(
+            self._synthetic(title="Transformer and cable supply"))
+        water = self.source.parse_and_normalize(
+            self._synthetic(title="Ductile iron pipe delivery", url="https://www.ppwsa.com.kh/t/2"))
+        other = self.source.parse_and_normalize(
+            self._synthetic(title="Headquarters renovation"))
+        assert energy.category_slug == "energy-renewables"
+        assert water.category_slug == "water-sanitation"
+        assert other.category_slug == "construction-infrastructure"
+
+    def test_products_and_requirements_default_empty(self):
+        n = self.source.parse_and_normalize(self._synthetic())
+        assert n.products_services == []
+        assert n.requirements == []
+
+    def test_currency_defaults_usd(self):
+        assert self.source.parse_and_normalize(self._synthetic()).currency == "USD"

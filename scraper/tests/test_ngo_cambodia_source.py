@@ -1,140 +1,163 @@
-"""Fixture-based tests for scraper/sources/ngo_cambodia.py.
+"""Tests for scraper/sources/ngo_cambodia.py (ReliefWeb v2 adapter).
 
-Fixture status (captured 2026-08-23): the adapter's website_url points at ReliefWeb,
-whose public API v1 is decommissioned and v2 rejects every generic appname with HTTP 403
-(see ngo_cambodia/reliefweb_api_403_appname_required.json — a real API response).
-Regardless, scraper/sources/ngo_cambodia.py performs no HTTP call at all: fetch_raw()
-returns hardcoded payloads. fetch_raw_output_snapshot.json freezes that real runtime
-output; it is NOT scraped from the wire.
+Fixtures:
+- reliefweb_api_403_appname_required.json: REAL 403 body captured 2026-08-23 —
+  ReliefWeb rejects unregistered appnames.
+- reliefweb_v2_shape_fixture.json: SYNTHETIC envelope in the documented v2
+  response shape, used to exercise the parser offline (no approved appname yet,
+  so a live capture is not possible).
+
+The adapter must NEVER emit fabricated notices: any API failure yields [].
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
+from unittest.mock import MagicMock, patch
 
-from conftest import load_json, load_text, raw_items_from_snapshot
+from conftest import load_json, load_text
 
 from scraper.sources.base import RawTenderData
 from scraper.sources.ngo_cambodia import NGOCambodiaSource
 
-SNAPSHOT = "ngo_cambodia/fetch_raw_output_snapshot.json"
+SHAPE = "ngo_cambodia/reliefweb_v2_shape_fixture.json"
+EVIDENCE_403 = "ngo_cambodia/reliefweb_api_403_appname_required.json"
 
 
-def normalized_all():
-    source = NGOCambodiaSource()
-    return [source.parse_and_normalize(r) for r in raw_items_from_snapshot(load_json(SNAPSHOT))]
+def _mock_response(status=200, json_body=None):
+    resp = MagicMock()
+    resp.status_code = status
+    if json_body is not None:
+        resp.json.return_value = json_body
+    return resp
 
 
-class TestFixtureIntegrity:
-    def test_reliefweb_api_rejection_documented(self):
-        body = load_text("ngo_cambodia/reliefweb_api_403_appname_required.json")
-        assert "appname" in body
+class TestDriftEvidence:
+    def test_real_403_documents_appname_requirement(self):
+        body = load_text(EVIDENCE_403)
+        assert "appname" in body.lower()
 
-    def test_snapshot_holds_the_two_hardcoded_notices(self):
-        snapshot = load_json(SNAPSHOT)
-        ids = [i["external_id"] for i in snapshot["items"]]
-        assert ids == ["NGO-KH-2026-041", "NGO-KH-2026-042"]
+    def test_shape_fixture_is_labelled_synthetic(self):
+        raw = load_json(SHAPE)
+        assert "SYNTHETIC" in raw["_comment"]
+
+
+class TestFetchRaw:
+    def setup_method(self):
+        self.source = NGOCambodiaSource()
+
+    def test_posts_to_v2_endpoint_with_appname_and_khm_filter(self):
+        with patch("scraper.sources.ngo_cambodia.requests.post",
+                   return_value=_mock_response(200, {"data": []})) as mock_post:
+            self.source.fetch_raw()
+        url = mock_post.call_args.args[0]
+        assert url.startswith("https://api.reliefweb.int/v2/jobs?appname=")
+        body = mock_post.call_args.kwargs["json"]
+        conditions = body["filter"]["conditions"]
+        assert {"field": "country.iso3", "value": ["KHM"]} in conditions
+
+    def test_parses_documented_v2_envelope(self):
+        payload = load_json(SHAPE)
+        payload.pop("_comment")
+        with patch("scraper.sources.ngo_cambodia.requests.post",
+                   return_value=_mock_response(200, payload)):
+            items = self.source.fetch_raw()
+        assert [i.external_id for i in items] == ["NGO-KH-RW-424242", "NGO-KH-RW-424243"]
+        assert items[0].title.startswith("Invitation to Bid")
+        assert items[0].source_url.endswith("invitation-bid-supply-and-delivery-school-furniture")
+        assert items[0].raw_payload["published"] == "2026-08-20T09:30:00+00:00"
+
+    def test_unapproved_appname_403_returns_empty_list(self):
+        # The documented reality until RELIEFWEB_APPNAME is registered.
+        with patch("scraper.sources.ngo_cambodia.requests.post",
+                   return_value=_mock_response(403)):
+            assert self.source.fetch_raw() == []
+
+    def test_network_error_returns_empty_list(self):
+        with patch("scraper.sources.ngo_cambodia.requests.post",
+                   side_effect=ConnectionError("offline")):
+            assert self.source.fetch_raw() == []
+
+    def test_rows_missing_id_or_title_are_skipped(self):
+        payload = load_json(SHAPE)
+        payload.pop("_comment")
+        payload["data"].append({"id": 99, "fields": {"id": 99, "title": ""}})
+        with patch("scraper.sources.ngo_cambodia.requests.post",
+                   return_value=_mock_response(200, payload)):
+            items = self.source.fetch_raw()
+        assert len(items) == 2
 
 
 class TestParseAndNormalize:
     def setup_method(self):
-        self.results = {n.external_id: n for n in normalized_all()}
         self.source = NGOCambodiaSource()
 
-    def test_titles_non_empty(self):
-        assert all(n.title.strip() for n in normalized_all())
-
-    def test_golden_slug_format(self):
-        n = self.results["NGO-KH-2026-041"]
-        # slug = "ngo-kh-" + sanitized title[:60] + "-" + external_id[-6:]
-        assert n.slug == (
-            "ngo-kh-rfp-cw-2026-03---construction-of-18-deep-groundwater-communi-26-041"
-        )
-
-    def test_deadline_parsed_to_tz_aware_datetime(self):
-        n = self.results["NGO-KH-2026-041"]
-        assert isinstance(n.deadline, datetime)
-        assert n.deadline.utcoffset() == timedelta(0)
-        payload_deadline = datetime.fromisoformat(
-            load_json(SNAPSHOT)["items"][0]["raw_payload"]["deadline"]
-        )
-        assert n.deadline == payload_deadline
-
-    def test_published_at_parsed_from_payload(self):
-        n = self.results["NGO-KH-2026-042"]
-        payload_published = datetime.fromisoformat(
-            load_json(SNAPSHOT)["items"][1]["raw_payload"]["published"]
-        )
-        assert n.published_at == payload_published
-
-    def test_summary_truncation_boundary(self):
-        long_desc, short_desc = normalized_all()
-        assert long_desc.summary.endswith("...")
-        assert len(long_desc.summary) == 243
-        assert short_desc.summary == short_desc.description  # under 240 chars: untouched
-
-    def test_estimated_value_and_currency_passthrough(self):
-        assert self.results["NGO-KH-2026-041"].estimated_value == 145000.0
-        assert self.results["NGO-KH-2026-042"].estimated_value == 98000.0
-        assert all(n.currency == "USD" for n in normalized_all())
-
-    def test_category_branches_on_real_records(self):
-        cats = {n.external_id: n.category_slug for n in normalized_all()}
-        assert cats["NGO-KH-2026-041"] == "water-sanitation"  # boreholes / construction
-        assert cats["NGO-KH-2026-042"] == "education-training"  # STEM kits / tablets
-
-    def test_default_category_is_consulting_services(self):
-        raw = self._synthetic("Consultancy for baseline survey", {})
-        assert self.source.parse_and_normalize(raw).category_slug == "consulting-services"
-
-    def test_absent_deadline_key_leaves_deadline_none(self):
-        # The now+20d fallback only fires when the key exists but fails to parse.
-        raw = self._synthetic("Rapid response relief supplies", {"deadline": None})
-        raw.raw_payload.pop("deadline", None)
-        assert self.source.parse_and_normalize(raw).deadline is None
-
-    def test_malformed_deadline_falls_back_to_now_plus_20_days(self):
-        raw = self._synthetic("Relief supplies tender", {"deadline": "15/09/2026"})
-        before = datetime.now(timezone.utc)
-        result = self.source.parse_and_normalize(raw)
-        after = datetime.now(timezone.utc)
-        assert result.deadline is not None
-        assert before + timedelta(days=20) <= result.deadline <= after + timedelta(days=20)
-
-    def test_missing_published_falls_back_to_now_utc(self):
-        raw = self._synthetic("Emergency distribution tender", {"deadline": None})
-        before = datetime.now(timezone.utc)
-        result = self.source.parse_and_normalize(raw)
-        after = datetime.now(timezone.utc)
-        assert before - timedelta(seconds=5) <= result.published_at <= after
-
-    def test_currency_defaults_to_usd_when_payload_lacks_it(self):
-        raw = self._synthetic("Agricultural tools procurement", {})
-        # NOTE: an explicit currency=None would crash pydantic validation, because
-        # payload.get("currency", "USD") only defaults on a MISSING key.
-        raw.raw_payload.pop("currency")
-        assert self.source.parse_and_normalize(raw).currency == "USD"
-
-    def test_constants_confidence_org_location(self):
-        for n in normalized_all():
-            assert n.confidence_score == 94
-            assert n.organization_slug == "ngo-cambodia"
-            assert n.location == "Kampong Thom & Multi-Provincial, Cambodia"
-
-    def _synthetic(self, title: str, payload_overrides: dict) -> RawTenderData:
+    def _synthetic(self, title="Invitation for Bids: Borehole Drilling Works", **payload_extra):
         payload = {
-            "id": "NGO-KH-TEST-01",
+            "id": "NGO-KH-RW-1",
             "title": title,
-            "deadline": None,
-            "published": None,
-            "budget": None,
-            "currency": "USD",
-            "url": "https://reliefweb.int/job/cambodia/test",
+            "url": "https://reliefweb.int/job/1",
+            "published": "2026-08-20T09:30:00+00:00",
+            "source": "example-ngo",
         }
-        payload.update(payload_overrides)
+        payload.update(payload_extra)
         return RawTenderData(
             source_code="ngo_cambodia",
-            external_id="NGO-KH-TEST-01",
-            source_url="https://reliefweb.int/job/cambodia/test",
+            external_id=payload["id"],
+            source_url=payload["url"],
             title=title,
-            description="x",
+            description=None,
             raw_payload=payload,
         )
+
+    def test_published_parsed_to_utc_datetime(self):
+        n = self.source.parse_and_normalize(self._synthetic())
+        assert n.published_at.utcoffset() == timezone.utc.utcoffset(None)
+        assert n.published_at.replace(tzinfo=None) == datetime(2026, 8, 20, 9, 30)
+
+    def test_no_deadline_key_means_no_invented_deadline(self):
+        assert self.source.parse_and_normalize(self._synthetic()).deadline is None
+
+    def test_malformed_deadline_is_dropped_not_faked(self):
+        n = self.source.parse_and_normalize(self._synthetic(deadline="next Friday"))
+        assert n.deadline is None
+
+    def test_category_water_branch(self):
+        n = self.source.parse_and_normalize(
+            self._synthetic(title="ITB: Drilling of Boreholes with Solar Pumps"))
+        assert n.category_slug == "water-sanitation"
+
+    def test_category_education_branch(self):
+        n = self.source.parse_and_normalize(
+            self._synthetic(title="RFQ: STEM Learning Kits Distribution"))
+        assert n.category_slug == "education-training"
+
+    def test_category_defaults_to_consulting_services(self):
+        n = self.source.parse_and_normalize(
+            self._synthetic(title="Audit Services Framework"))
+        assert n.category_slug == "consulting-services"
+
+    def test_organization_slug_from_source_shortname(self):
+        n = self.source.parse_and_normalize(self._synthetic())
+        assert n.organization_slug == "example-ngo"
+
+    def test_slug_format(self):
+        n = self.source.parse_and_normalize(self._synthetic())
+        assert n.slug.startswith("ngo-kh-invitation-for-bids-borehole-drilling-wor")
+        assert n.slug.endswith("rw-1")
+
+    def test_summary_truncation_boundary(self):
+        long_desc = "x" * 300
+        n = self.source.parse_and_normalize(
+            RawTenderData(
+                source_code="ngo_cambodia",
+                external_id="NGO-KH-RW-2",
+                source_url="u",
+                title="t",
+                description=long_desc,
+                raw_payload={"id": "NGO-KH-RW-2", "title": "t"},
+            ))
+        assert len(n.summary) == 243 and n.summary.endswith("...")
+
+    def test_products_and_requirements_default_empty(self):
+        n = self.source.parse_and_normalize(self._synthetic())
+        assert n.products_services == []
+        assert n.requirements == []

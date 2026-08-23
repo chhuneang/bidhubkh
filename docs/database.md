@@ -23,4 +23,5 @@ Execute the migrations in sequential order:
 2. `database/migrations/00002_rls_policies.sql` (Enables RLS and configures security policies)
 3. `database/seed/001_categories.sql` (Inserts category taxonomy)
 4. `database/seed/002_sources.sql` (Inserts official sources and organizations)
-5. `database/seed/003_sample_tenders.sql` (Optional sample tenders for local testing)
+5. *(removed)* `database/seed/003_sample_tenders.sql` was deleted on 2026-08-23: it seeded
+   fabricated demo tenders. Do not reintroduce sample tenders into shared environments.

@@ -1,139 +1,137 @@
-"""Fixture-based tests for scraper/sources/mef.py.
+"""Tests for scraper/sources/mef.py.
 
-Fixture status (captured 2026-08-23, see mef_gdipp/live_endpoint_evidence.txt):
-the GDPP portal host gdpp.mef.gov.kh does not resolve in DNS and www.mef.gov.kh
-returns HTTP 403, so no real HTML page could be captured. fetch_raw_output_snapshot.json
-is the adapter's ACTUAL runtime output — the curated _get_active_ministry_tenders()
-fallback that production ingests today. It is NOT scraped HTML and is labelled as such.
+Fixture:
+- live_endpoint_evidence.txt: REAL probe results captured 2026-08-23 — the GDPP
+  portal's DNS does not resolve and www.mef.gov.kh blocks non-browser clients,
+  so the scrape branch can rarely run. The adapter's former
+  `_get_active_ministry_tenders()` fallback (four invented ministry tenders that
+  reached production) was removed; failures must yield [].
+
+The scrape-success path below uses a tiny SYNTHETIC HTML snippet to exercise the
+selector loop — it is markup shaped like the selectors expect, not a capture of
+any real MEF page.
 """
 
-import re
-from datetime import datetime, timedelta
+from datetime import datetime, timezone
+from unittest.mock import MagicMock, patch
 
-from conftest import load_json, load_text, raw_items_from_snapshot
+from conftest import load_text
 
 from scraper.sources.base import RawTenderData
 from scraper.sources.mef import MEFSource
 
-SNAPSHOT = "mef_gdipp/fetch_raw_output_snapshot.json"
+SYNTHETIC_PORTAL_HTML = """
+<html><body><table>
+  <tr class="table-row">
+    <td><a class="title" href="/notices/example-1">Synthetic ministry notice one</a></td>
+  </tr>
+  <tr class="table-row">
+    <td><a class="title" href="https://gdpp.mef.gov.kh/notices/example-2">Synthetic ministry notice two</a></td>
+  </tr>
+</table></body></html>
+"""
 
 
-def normalized_all():
-    source = MEFSource()
-    return [source.parse_and_normalize(r) for r in raw_items_from_snapshot(load_json(SNAPSHOT))]
+def _mock_response(status=200, html=""):
+    resp = MagicMock()
+    resp.status_code = status
+    resp.text = html
+    return resp
 
 
-class TestLivePortalEvidence:
-    def test_dns_failure_documented(self):
-        evidence = load_text("mef_gdipp/live_endpoint_evidence.txt")
-        assert "Could not resolve host" in evidence
+class TestDriftEvidence:
+    def test_probe_documents_dns_and_cloudflare_blocks(self):
+        body = load_text("mef_gdipp/live_endpoint_evidence.txt")
+        assert "Could not resolve host" in body
+        assert "403" in body
 
-    def test_snapshot_is_the_fallback_path_output(self):
-        # The live HTML branch yields nothing (host unreachable), so every item in
-        # the snapshot must come from the curated ministry packages.
-        snapshot = load_json(SNAPSHOT)
-        ids = [i["external_id"] for i in snapshot["items"]]
-        assert ids == [
-            "MEF-GDPP-2026-NCB-014",
-            "MPWT-RN5-2026-CW-028",
-            "MOEYS-STEPCAM-2026-G-009",
-            "MOH-HSSP2-2026-MED-045",
+
+class TestFetchRaw:
+    def setup_method(self):
+        self.source = MEFSource()
+
+    def test_unreachable_portal_returns_empty_list_not_curated_tenders(self):
+        with patch("scraper.sources.mef.requests.get",
+                   side_effect=Exception("Could not resolve host: gdpp.mef.gov.kh")):
+            assert self.source.fetch_raw() == []
+
+    def test_portal_403_returns_empty_list(self):
+        with patch("scraper.sources.mef.requests.get", return_value=_mock_response(403)):
+            assert self.source.fetch_raw() == []
+
+    def test_scrape_parses_synthetic_rows_with_relative_link_resolution(self):
+        with patch("scraper.sources.mef.requests.get",
+                   return_value=_mock_response(200, SYNTHETIC_PORTAL_HTML)):
+            items = self.source.fetch_raw()
+        assert [i.title for i in items] == [
+            "Synthetic ministry notice one",
+            "Synthetic ministry notice two",
         ]
+        # Relative hrefs resolve against the portal base; absolute pass through.
+        assert items[0].source_url == "https://gdpp.mef.gov.kh/notices/example-1"
+        assert items[1].source_url == "https://gdpp.mef.gov.kh/notices/example-2"
+        assert items[0].external_id == "MEF-KH-2026-1001"
+
+    def test_rows_without_any_title_element_are_skipped(self):
+        html = '<table><tr class="table-row"><td>no title elem here</td></tr></table>'
+        with patch("scraper.sources.mef.requests.get", return_value=_mock_response(200, html)):
+            items = self.source.fetch_raw()
+        assert len(items) == 1  # generic "MEF Public Procurement Notice N" title
+        assert items[0].title.startswith("MEF Public Procurement Notice")
 
 
 class TestParseAndNormalize:
     def setup_method(self):
-        self.results = {n.external_id: n for n in normalized_all()}
+        self.source = MEFSource()
 
-    def test_all_titles_and_slugs_non_empty(self):
-        for n in normalized_all():
-            assert n.title.strip()
-            assert n.slug.strip()
-
-    def test_golden_slug_for_first_package(self):
-        n = self.results["MEF-GDPP-2026-NCB-014"]
-        assert n.slug == (
-            "procurement-of-650-high-performance-workstations-and-network-infrastructure"
-            "-for-national-tax-customs-modernization-mef-gdpp-2026-ncb-014"
-        )
-
-    def test_slug_has_no_spaces_or_special_characters(self):
-        for n in normalized_all():
-            assert not re.search(r"[^a-z0-9-]", n.slug)
-            assert " " not in n.slug
-            assert n.slug.endswith(n.external_id.lower())
-
-    def test_reference_number_from_payload_ref(self):
-        assert (
-            self.results["MEF-GDPP-2026-NCB-014"].reference_number
-            == "MEF/GDPP/NCB/2026/G-014"
-        )
-
-    def test_reference_number_falls_back_to_external_id(self):
-        raw = raw_items_from_snapshot(load_json(SNAPSHOT))[0].model_copy(deep=True)
-        raw.raw_payload.pop("ref", None)
-        result = MEFSource().parse_and_normalize(raw)
-        assert result.reference_number == "MEF-GDPP-2026-NCB-014"
-
-    def test_estimated_value_from_budget_field_in_usd(self):
-        assert self.results["MEF-GDPP-2026-NCB-014"].estimated_value == 480000.0
-        assert self.results["MPWT-RN5-2026-CW-028"].estimated_value == 1250000.0
-        assert all(n.currency == "USD" for n in normalized_all())
-
-    def test_published_is_two_days_ago_and_deadline_honours_days_ahead(self):
-        before = datetime.now() - timedelta(seconds=30)
-        source = MEFSource()
-        raw = raw_items_from_snapshot(load_json(SNAPSHOT))[0]
-        result = source.parse_and_normalize(raw)
-        after = datetime.now()
-
-        # published_at = now - 2 days
-        assert before - timedelta(days=2) <= result.published_at <= after - timedelta(days=2)
-
-        # deadline = now + payload days_ahead (28 for this package)
-        expected_low = before + timedelta(days=28)
-        expected_high = after + timedelta(days=28)
-        assert expected_low <= result.deadline <= expected_high
-
-    def test_default_days_ahead_is_25_when_payload_lacks_it(self):
-        raw = RawTenderData(
+    def _synthetic(self, **payload_extra):
+        payload = {"title": "Synthetic notice", "url": "https://gdpp.mef.gov.kh/notices/x", "index": 0}
+        payload.update(payload_extra)
+        return RawTenderData(
             source_code="mef_gdipp",
-            external_id="MEF-KH-TEST-1",
-            source_url="https://gdpp.mef.gov.kh/notices/mef-kh-test-1",
-            title="Generic Ministry Notice",
-            description="placeholder",
-            raw_payload={},
+            external_id="MEF-KH-2026-1001",
+            source_url=payload["url"],
+            title=payload["title"],
+            description="Synthetic description.",
+            raw_payload=payload,
         )
-        before = datetime.now()
-        result = MEFSource().parse_and_normalize(raw)
-        after = datetime.now()
-        assert before + timedelta(days=25) <= result.deadline <= after + timedelta(days=25)
 
-    def test_empty_payload_uses_sensible_defaults(self):
-        raw = RawTenderData(
-            source_code="mef_gdipp",
-            external_id="MEF-KH-TEST-2",
-            source_url="https://gdpp.mef.gov.kh/notices/x",
-            title="Another Notice",
-            description="d",
-            raw_payload={},
-        )
-        n = MEFSource().parse_and_normalize(raw)
-        assert n.organization_name == "Ministry of Economy and Finance (MEF)"
+    def test_no_deadline_key_means_no_invented_deadline(self):
+        n = self.source.parse_and_normalize(self._synthetic())
+        assert n.deadline is None
+
+    def test_payload_deadline_parsed_when_present(self):
+        n = self.source.parse_and_normalize(
+            self._synthetic(deadline="2026-10-01T09:00:00+00:00"))
+        assert n.deadline is not None
+        assert n.deadline.utcoffset() == timezone.utc.utcoffset(None)
+        assert n.deadline.replace(tzinfo=None) == datetime(2026, 10, 1, 9, 0)
+
+    def test_malformed_deadline_is_dropped_not_faked(self):
+        n = self.source.parse_and_normalize(self._synthetic(deadline="soon"))
+        assert n.deadline is None
+
+    def test_published_defaults_to_now_without_backdating(self):
+        before = datetime.utcnow()
+        n = self.source.parse_and_normalize(self._synthetic())
+        after = datetime.utcnow()
+        assert before <= n.published_at.replace(tzinfo=None) <= after
+
+    def test_reference_number_from_ref_key_else_external_id(self):
+        n = self.source.parse_and_normalize(self._synthetic(ref="SYN/2026/G-001"))
+        assert n.reference_number == "SYN/2026/G-001"
+        n2 = self.source.parse_and_normalize(self._synthetic())
+        assert n2.reference_number == "MEF-KH-2026-1001"
+
+    def test_slug_format(self):
+        n = self.source.parse_and_normalize(self._synthetic())
+        assert n.slug == "synthetic-notice-mef-kh-2026-1001"
+
+    def test_organization_and_category_defaults(self):
+        n = self.source.parse_and_normalize(self._synthetic())
         assert n.organization_slug == "mef-cambodia"
         assert n.category_slug == "consulting-services"
-        assert n.location == "Cambodia"
-        assert n.estimated_value is None
 
-    def test_organization_and_category_passthrough(self):
-        assert self.results["MPWT-RN5-2026-CW-028"].organization_slug == "mpwt-cambodia"
-        assert (
-            self.results["MPWT-RN5-2026-CW-028"].category_slug == "construction-civil"
-        )
-        assert self.results["MOH-HSSP2-2026-MED-045"].category_slug == "medical-healthcare"
-
-    def test_constants_procurement_method_eligibility_confidence(self):
-        for n in normalized_all():
-            assert n.procurement_method == "National Competitive Bidding (NCB)"
-            assert "Certificate of Tax Compliance" in n.eligibility
-            assert n.confidence_score == 98
+    def test_category_from_payload_when_provided(self):
+        n = self.source.parse_and_normalize(self._synthetic(category="it-telecom"))
+        assert n.category_slug == "it-telecom"

@@ -1,5 +1,5 @@
 import re
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import List
 
 import requests
@@ -57,82 +57,15 @@ class MEFSource(BaseSource):
                         )
                     )
         except Exception as e:
-            print(f"[MEFSource] Live portal scrape notice ({e}). Ingesting official Cambodian Ministry tenders...")
+            print(f"[MEFSource] Live portal scrape note: {e}")
 
-        # If live HTML portal is dynamically rendered or protected by Cloudflare, seed with curated active Cambodian ministry tenders
-        if len(raw_items) == 0:
-            raw_items = self._get_active_ministry_tenders()
-
+        # No fabricated fallbacks: when the GDPP portal is unreachable (its DNS
+        # does not resolve from most hosts — see tests/fixtures/mef_gdipp/
+        # live_endpoint_evidence.txt) we return an honest empty list instead of
+        # simulated ministry tenders.
+        if not raw_items:
+            print("[MEFSource] No notices parsed from the MEF portal this run.")
         return raw_items
-
-    def _get_active_ministry_tenders(self) -> List[RawTenderData]:
-        """
-        Official live active Cambodian ministry procurement packages published through MEF/GDPP guidelines.
-        """
-        packages = [
-            {
-                "id": "MEF-GDPP-2026-NCB-014",
-                "ref": "MEF/GDPP/NCB/2026/G-014",
-                "title": "Procurement of 650 High-Performance Workstations and Network Infrastructure for National Tax & Customs Modernization",
-                "org": "General Department of Taxation (GDT) / MEF",
-                "org_slug": "mef-cambodia",
-                "category": "it-telecom",
-                "budget": 480000.0,
-                "days_ahead": 28,
-                "location": "Phnom Penh & 14 Provincial Tax Branches",
-                "desc": "Supply, deployment, and configuration of 650 enterprise desktop workstations, core Cisco routing switches, and high-availability UPS systems for the General Department of Taxation branch automation project."
-            },
-            {
-                "id": "MPWT-RN5-2026-CW-028",
-                "ref": "MPWT/RN5/2026/CW-028",
-                "title": "Civil Works for Road Widening and Asphalt Concrete Resurfacing on National Road 5 (Battambang to Banteay Meanchey Section)",
-                "org": "Ministry of Public Works and Transport (MPWT)",
-                "org_slug": "mpwt-cambodia",
-                "category": "construction-civil",
-                "budget": 1250000.0,
-                "days_ahead": 35,
-                "location": "Battambang & Banteay Meanchey Provinces",
-                "desc": "Rehabilitation, 4-lane widening, and asphalt concrete (AC) surfacing of 42.8 km of National Road 5 including culvert upgrades, safety crash barriers, and pedestrian road signage."
-            },
-            {
-                "id": "MOEYS-STEPCAM-2026-G-009",
-                "ref": "MoEYS/STEPCam/2026/G-009",
-                "title": "Supply and Delivery of 120 Interactive Smart Boards and STEM Science Laboratory Kits for Upper Secondary Schools",
-                "org": "Ministry of Education, Youth and Sport (MoEYS)",
-                "org_slug": "moeys-cambodia",
-                "category": "it-telecom",
-                "budget": 320000.0,
-                "days_ahead": 21,
-                "location": "Phnom Penh, Kandal, Siem Reap, and Kampong Cham",
-                "desc": "Supply and installation of 120 75-inch 4K Interactive Touch Flat Panels with mobile stands, pre-installed science curriculum software, and 30 physics/chemistry experimental equipment sets."
-            },
-            {
-                "id": "MOH-HSSP2-2026-MED-045",
-                "ref": "MOH/HSSP2/2026/G-045",
-                "title": "Supply, Testing, and Commissioning of 24 Mobile Digital X-Ray Machines and Automated Chemistry Analyzers for Referral Hospitals",
-                "org": "Ministry of Health (MoH)",
-                "org_slug": "moh-cambodia",
-                "category": "medical-healthcare",
-                "budget": 890000.0,
-                "days_ahead": 30,
-                "location": "Kampot, Koh Kong, Pursat, and Stung Treng Hospitals",
-                "desc": "Procurement of 24 high-frequency mobile digital radiography (DR) X-Ray machines and 18 fully automated clinical chemistry analyzers with 2-year warranty and biomedical maintenance training."
-            }
-        ]
-
-        items = []
-        for pkg in packages:
-            items.append(
-                RawTenderData(
-                    source_code=self.code,
-                    external_id=pkg["id"],
-                    source_url=f"https://gdpp.mef.gov.kh/notices/{pkg['id'].lower()}",
-                    title=pkg["title"],
-                    description=pkg["desc"],
-                    raw_payload=pkg
-                )
-            )
-        return items
 
     def parse_and_normalize(self, raw: RawTenderData) -> NormalizedTenderData:
         payload = raw.raw_payload
@@ -142,8 +75,21 @@ class MEFSource(BaseSource):
         slug_base = re.sub(r'[^a-zA-Z0-9\s-]', '', clean_title.lower())
         slug = re.sub(r'[\s]+', '-', slug_base)[:120] + f"-{raw.external_id.lower()}"
 
-        published_at = datetime.now() - timedelta(days=2)
-        deadline = datetime.now() + timedelta(days=payload.get("days_ahead", 25))
+        # Dates come from the payload only — scraped rows carry no deadline
+        # until one is parsed from the notice itself, and we never invent one.
+        published_at = datetime.utcnow()
+        if payload.get("published"):
+            try:
+                published_at = datetime.fromisoformat(str(payload["published"]).replace("Z", "+00:00"))
+            except Exception:
+                pass
+
+        deadline = None
+        if payload.get("deadline"):
+            try:
+                deadline = datetime.fromisoformat(str(payload["deadline"]).replace("Z", "+00:00"))
+            except Exception:
+                deadline = None
 
         return NormalizedTenderData(
             source_code=self.code,
