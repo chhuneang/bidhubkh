@@ -1,0 +1,83 @@
+# BidHubKH scheduled ingestion — Milestone 17.
+# Runs the full pipeline every 6 hours against all six sources, writing
+# through Supabase with the service-role key. Job-failure email
+# notifications (GitHub default) are the first-line monitoring channel,
+# with the public /sources health page as the human-readable view.
+#
+# Required repo secrets (Settings → Secrets and variables → Actions):
+#   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
+#   GEMINI_API_KEY or OPENROUTER_API_KEY (+ OPENROUTER_MODEL),
+#   TELEGRAM_BOT_TOKEN
+name: Ingest tenders
+
+on:
+  schedule:
+    # Every 6 hours at :17 — off the congested top-of-hour window.
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      source:
+        description: "Source to ingest (defaults to all)"
+        type: choice
+        options:
+          - all
+          - world_bank_kh
+          - adb_kh
+          - mef_gdipp
+          - ungm
+          - ngo_cambodia
+          - state_utilities
+        default: all
+
+concurrency:
+  group: ingest
+  cancel-in-progress: false
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: scraper/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r scraper/requirements.txt
+
+      # Repo root cwd: `scraper` is a namespace package resolved from here.
+      - name: Run ingestion
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          OPENROUTER_MODEL: ${{ secrets.OPENROUTER_MODEL }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: |
+          python -m scraper.ingest --source "${{ github.event.inputs.source || 'all' }}" \
+            2>&1 | tee scraper/ingest_run.log
+          exit ${PIPESTATUS[0]}
+
+      - name: Append run tail to job summary
+        if: always()
+        run: |
+          {
+            echo "## Ingestion run — $(date -u '+%Y-%m-%d %H:%M UTC')"
+            echo '```'
+            tail -50 scraper/ingest_run.log 2>/dev/null || echo "(no log produced)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload run log artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ingest-run-${{ github.run_id }}
+          path: scraper/ingest_run.log
+          retention-days: 14
+          if-no-files-found: warn

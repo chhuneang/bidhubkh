@@ -132,6 +132,51 @@ documentation claims and the code, plus production launch.
 
 ---
 
+# Post-M16 findings & decisions (2026-08-23)
+
+Milestone 16 closed with commits `d48b830` (ruff), `9ddf26d` (test harness:
+168 pytest offline w/ real-source fixtures + 65 vitest + CI), `ca7c840`
+(bug fixes verified against live APIs).
+
+## Fixed in `ca7c840`
+
+1. **World Bank adapter ingested global tenders** — `countrycode_exact=KH`
+   is silently ignored by the v2 API (verified: 0/50 results were
+   Cambodia). Now `qterm=Cambodia` + `project_ctry_name` post-filter.
+2. **WB `published_at` was always ingest-time** — payload key is
+   `noticedate` ("17-Aug-2026"), not `proc_notice_date`; parse branch added.
+3. **Dispatcher TypeError** when a matched tender had no title.
+
+## Awaiting owner decision — polluted live data
+
+All 27 `world_bank_kh` tenders currently `published`+`approved` are
+non-Cambodian (Ethiopia 4, Mali 3, West Bank and Gaza 3, Sri Lanka 2,
+plus others incl. 3 with no country field). Proposed reversible cleanup
+(NOT executed):
+
+```sql
+UPDATE tenders t SET moderation_status = 'rejected'
+FROM sources s, raw_tenders rt
+WHERE s.id = t.source_id AND s.code = 'world_bank_kh'
+  AND rt.external_id = t.external_id AND rt.source_id = t.source_id
+  AND COALESCE(rt.raw_payload->>'project_ctry_name','') <> 'Cambodia';
+```
+
+## Backlog (found by tests, unfixed by design)
+
+* `decision_matrix.ts`: NO_BID branch unreachable (min score 55 > 50);
+  several clamps dead code.
+* `bakong.ts`: KHQR TLV lengths use UTF-16 `.length`, not UTF-8 bytes —
+  fix before real Bakong verification.
+* `matching.ts`: matched/unmatched overlap quirk; parsed requirements
+  never consulted.
+* WB keyword classifier: naive substring ("sanitation" → it-telecom).
+* Adapter drift: ADB listing needs browser UA (API path dead); MEF host
+  DNS-fails; UNGM API paths redirect to GenericError; ReliefWeb needs an
+  approved appname — fixtures + `_capture_note` files document each.
+
+---
+
 # Deferred backlog (explicitly NOT in this cycle)
 
 | Item | Why deferred |
