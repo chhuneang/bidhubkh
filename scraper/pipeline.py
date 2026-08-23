@@ -5,18 +5,20 @@ from datetime import datetime
 from typing import List, Optional
 from dotenv import load_dotenv
 from scraper.sources.base import BaseSource, RawTenderData, NormalizedTenderData
+from scraper.extractors.gemini_extractor import GeminiExtractor
 
 load_dotenv()
 
 class IngestionPipeline:
     """
-    Executes extraction, deduplication, and database ingestion workflow.
-    Integrates directly with Supabase PostgreSQL if configured.
+    Executes extraction, AI intelligence summarization, deduplication, 
+    and database ingestion workflow into Supabase PostgreSQL.
     """
     def __init__(self):
         self.supabase_url = os.getenv("SUPABASE_URL")
         self.supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_ANON_KEY")
         self.client = None
+        self.ai_extractor = GeminiExtractor()
 
         if self.supabase_url and self.supabase_key and "your-project" not in self.supabase_url:
             try:
@@ -63,9 +65,11 @@ class IngestionPipeline:
             pass
         return None
 
-    def run_source(self, source: BaseSource) -> dict:
+    def run_source(self, source: BaseSource, enable_ai: bool = True) -> dict:
         print(f"\n==========================================")
         print(f"[Pipeline] Starting collection for: {source.name}")
+        if enable_ai and self.ai_extractor.is_available():
+            print("[Pipeline] 🤖 Google Gemini 2.0 Flash AI extraction enabled.")
         print(f"==========================================")
         
         raw_items = source.fetch_raw()
@@ -81,8 +85,23 @@ class IngestionPipeline:
             content_hash = self.compute_content_hash(raw.raw_payload)
             normalized = source.parse_and_normalize(raw)
 
+            # AI Enrichment
+            if enable_ai:
+                ai_result = self.ai_extractor.extract_from_text(
+                    title=normalized.title,
+                    description=normalized.description or "",
+                    source_name=source.name
+                )
+                normalized.summary = ai_result.summary
+                normalized.products_services = ai_result.products_services
+                normalized.requirements = ai_result.requirements
+                if ai_result.category_slug:
+                    normalized.category_slug = ai_result.category_slug
+                if ai_result.estimated_value:
+                    normalized.estimated_value = ai_result.estimated_value
+
             # Ingestion print summary
-            print(f"  -> [{normalized.category_slug}] {normalized.title[:65]}...")
+            print(f"  -> [{normalized.category_slug}] {normalized.title[:60]}...")
 
             if self.client and source_id:
                 try:
@@ -122,6 +141,8 @@ class IngestionPipeline:
                         "currency": normalized.currency,
                         "procurement_method": normalized.procurement_method,
                         "eligibility": normalized.eligibility,
+                        "products_services": normalized.products_services,
+                        "requirements": normalized.requirements,
                         "original_url": normalized.original_url,
                         "confidence_score": normalized.confidence_score,
                         "status": "published",

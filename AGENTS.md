@@ -45,16 +45,21 @@ Welcome, AI Agent! This document tracks the exact architectural decisions, compl
 - **Source #2 (Asian Development Bank Cambodia)**: [scraper/sources/adb.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/sources/adb.py).
 - Built [scraper/pipeline.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/pipeline.py) and [scraper/ingest.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/ingest.py). Actively tested and writing live data directly to Supabase (`raw_tenders` and `tenders`).
 
+### Milestone 08 — AI Tender Intelligence & Summarization Engine
+- Built [scraper/extractors/gemini_extractor.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/extractors/gemini_extractor.py) powered by **Google Gemini 2.0 Flash** (`google-genai`).
+- Extracts structured outputs: 2-3 sentence executive summaries, key buyer intent, product specifications, and mandatory supplier qualification checklists.
+- Wired directly into the ingestion pipeline to automatically enrich all incoming notices in Supabase.
+
 ---
 
 ## 📋 Recommended Next Steps for the Next AI Agent
 
 1. **Source #3: Cambodian Government Portal Ingestion**:
-   - Build adapter for General Department of Public Procurement (MEF / GDIPP) or FMIS HTML scraping in [scraper/sources/mef.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/sources/mef.py).
-2. **AI Document Extraction & Summaries (Milestone 08 / Phase 17)**:
-   - Integrate Google Gemini 2.0 Flash to download tender PDF attachments, extract structured requirements/specifications, and store summaries in the database.
-3. **User Authentication & Supplier Company Profiles (Milestones 07 & 09)**:
+   - Build adapter for General Department of Public Procurement (MEF / GDPP) or FMIS HTML scraping in [scraper/sources/mef.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/sources/mef.py).
+2. **User Authentication & Supplier Company Profiles (Milestones 07 & 09)**:
    - Wire Supabase Auth (Email/Password & Google OAuth) to `/login` and `/dashboard` for supplier profiles, bookmarked tenders, and email/Telegram alert subscriptions.
+3. **AI Supplier Matching (Milestone 09)**:
+   - Match company product catalogs against extracted tender requirements to calculate qualification match percentages (e.g. "92% Match").
 
 ---
 
