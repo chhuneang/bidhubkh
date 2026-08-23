@@ -37,9 +37,11 @@ class TenderAIExtractionResult(BaseModel):
 
 class GeminiExtractor:
     """
-    Tender Document & Notice Intelligence Extractor powered by Google Gemini 2.0 Flash.
-    Extracts structured requirements, products, and concise summaries from Khmer & English documents.
+    Tender Document & Notice Intelligence Extractor powered by Google Gemini Flash.
+    Extracts structured requirements, products, and concise summaries with automatic multi-model failover.
     """
+    MODELS = ['gemini-2.5-flash-lite', 'gemini-flash-latest', 'gemini-3.7-flash']
+
     def __init__(self):
         self.api_key = os.getenv("GEMINI_API_KEY")
         self.client = None
@@ -48,7 +50,7 @@ class GeminiExtractor:
             try:
                 from google import genai
                 self.client = genai.Client(api_key=self.api_key)
-                print("[GeminiExtractor] Initialized Gemini 2.0 Flash Client successfully.")
+                print("[GeminiExtractor] Initialized Gemini AI Client successfully.")
             except Exception as e:
                 print(f"[GeminiExtractor] Client initialization notice: {e}")
 
@@ -57,7 +59,7 @@ class GeminiExtractor:
 
     def extract_from_text(self, title: str, description: str, source_name: str = "") -> TenderAIExtractionResult:
         """
-        Extracts structured tender intelligence from raw text or tender notices.
+        Extracts structured tender intelligence from raw text or tender notices with model fallback.
         """
         if not self.is_available():
             return self._heuristic_fallback(title, description)
@@ -90,28 +92,29 @@ Extract the following in strict JSON format:
    - "education-training"
 """
 
-        try:
-            response = self.client.models.generate_content(
-                model='gemini-2.0-flash',
-                contents=prompt,
-                config={
-                    'response_mime_type': 'application/json',
-                    'response_schema': TenderAIExtractionResult,
-                    'temperature': 0.1,
-                }
-            )
-            
-            if response.text:
-                data = json.loads(response.text)
-                return TenderAIExtractionResult(**data)
-        except Exception as e:
-            print(f"[GeminiExtractor] AI extraction warning: {e}. Using heuristic fallback.")
+        for model_name in self.MODELS:
+            try:
+                response = self.client.models.generate_content(
+                    model=model_name,
+                    contents=prompt,
+                    config={
+                        'response_mime_type': 'application/json',
+                        'response_schema': TenderAIExtractionResult,
+                        'temperature': 0.1,
+                    }
+                )
+                
+                if response.text:
+                    data = json.loads(response.text)
+                    return TenderAIExtractionResult(**data)
+            except Exception as e:
+                continue
 
         return self._heuristic_fallback(title, description)
 
     def _heuristic_fallback(self, title: str, description: str) -> TenderAIExtractionResult:
         """
-        Deterministic rule-based extractor when AI key is not configured.
+        Deterministic rule-based extractor when AI key is not configured or offline.
         """
         title_lower = title.lower()
         desc_lower = (description or "").lower()
@@ -123,11 +126,11 @@ Extract the following in strict JSON format:
             "Demonstrated relevant track record and past performance in similar contract assignments."
         ]
 
-        if any(w in title_lower for w in ["laptop", "computer", "it", "software", "network", "server", "digital"]):
+        if any(w in title_lower for w in ["laptop", "computer", "it", "software", "network", "server", "digital", "grid"]):
             category = "it-telecom"
-            products = ["Enterprise IT Hardware / Software Licenses", "Manufacturer Authorized Warranty & Maintenance"]
+            products = ["Enterprise IT Hardware / Systems Equipment", "Manufacturer Authorized Warranty & Technical Support"]
             requirements.append("Manufacturer Authorization Form (MAF) from authorized hardware vendor.")
-        elif any(w in title_lower for w in ["road", "bridge", "civil", "construction", "building", "paving", "rehabilitation"]):
+        elif any(w in title_lower for w in ["road", "bridge", "civil", "construction", "building", "paving", "drainage"]):
             category = "construction-civil"
             products = ["Civil Works & Infrastructure Construction", "Materials, Earthworks & Quality Testing"]
             requirements.append("Registered construction contractor with proven machinery availability.")
