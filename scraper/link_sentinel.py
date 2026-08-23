@@ -23,19 +23,19 @@ logger = logging.getLogger("LinkSentinel")
 # Official Cambodian & International Procurement Authority Registry
 AUTHORITY_PORTAL_REGISTRY: Dict[str, Dict[str, str]] = {
     "world_bank_kh": {
-        "name": "The World Bank Cambodia Projects Portal",
+        "name": "The World Bank Cambodia Projects & Procurement Portal",
         "fallback_url": "https://projects.worldbank.org/en/projects-operations/procurement?countrycode_exact=KH",
         "allowed_domains": ["worldbank.org", "projects.worldbank.org", "documents.worldbank.org"]
     },
     "adb_kh": {
-        "name": "Asian Development Bank (ADB) Cambodia Tenders",
-        "fallback_url": "https://www.adb.org/projects/tenders/country/khm",
+        "name": "Asian Development Bank (ADB) Cambodia Procurement",
+        "fallback_url": "https://www.adb.org/countries/cambodia/main",
         "allowed_domains": ["adb.org", "www.adb.org"]
     },
     "mef_gdipp": {
-        "name": "General Department of Public Procurement (MEF Cambodia)",
-        "fallback_url": "https://gdpp.mef.gov.kh",
-        "allowed_domains": ["gdpp.mef.gov.kh", "mef.gov.kh", "mpwt.gov.kh", "moeys.gov.kh", "moh.gov.kh"]
+        "name": "Royal Government of Cambodia Public Procurement Portal",
+        "fallback_url": "https://www.mpwt.gov.kh/en/documents",
+        "allowed_domains": ["mpwt.gov.kh", "www.mpwt.gov.kh", "pressocm.gov.kh"]
     },
     "ungm": {
         "name": "UN Global Marketplace (UNGM) Cambodia",
