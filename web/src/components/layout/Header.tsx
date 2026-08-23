@@ -54,6 +54,10 @@ export function Header() {
               <Bookmark className="h-3.5 w-3.5 text-blue-400" />
               Bid Pipeline
             </Link>
+            <Link href="/pricing" className="hover:text-blue-400 transition-colors flex items-center gap-1.5">
+              <span className="text-emerald-400 font-bold">$</span>
+              Pricing
+            </Link>
             <Link href="/admin" className="hover:text-blue-400 transition-colors flex items-center gap-1.5">
               <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
               Sources Health

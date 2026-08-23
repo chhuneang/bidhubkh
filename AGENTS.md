@@ -87,10 +87,17 @@ Welcome, AI Agent! This document tracks the exact architectural decisions, compl
   - 🚀 **Executive Go / No-Go Recommendations** (*Bid with Confidence*, *Bid with Caution / Consortium*, *No-Bid Recommended*)
 - Built interactive [BidDecisionMatrixCard.tsx](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/web/src/components/tenders/BidDecisionMatrixCard.tsx) with one-click Decision Memo export/print support.
 
+### Milestone 12 — Monetization & Subscription Tiers (Bakong KHQR + Stripe)
+- Applied database migrations in `database/migrations/00003_subscriptions_and_billing.sql` creating `subscription_plans`, `user_subscriptions`, and `payment_transactions`.
+- Built National Bank of Cambodia (NBC) KHQR EMVCo dynamic QR code generator in [web/src/lib/bakong.ts](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/web/src/lib/bakong.ts).
+- Built interactive pricing page ([/pricing](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/web/src/app/pricing/page.tsx)) with **USD ($) / KHR (៛)** currency switcher and 3 tiers (Free Starter, Pro Supplier, Enterprise GovTech).
+- Built interactive [BakongCheckoutModal.tsx](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/web/src/components/billing/BakongCheckoutModal.tsx) with real-time countdown timer and instant payment confirmation.
+- Enhanced **Supplier Dashboard** ([/dashboard](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/web/src/app/dashboard/page.tsx)) with a dedicated **"Plan & Bakong Billing"** management tab.
+
 ---
 
-## 🏆 Project Completion Status: 11 / 11 Milestones Completed (100%)
-All 11 architectural milestones are fully implemented, verified, tested against Supabase PostgreSQL, and operational.
+## 🏆 Project Completion Status: 12 / 15 Milestones Completed
+All 12 implemented milestones are verified, tested against Supabase PostgreSQL, and operational.
 
 ---
 
