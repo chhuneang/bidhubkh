@@ -16,25 +16,8 @@ import {
   ExternalLink
 } from 'lucide-react'
 
-// Fallback seed tenders if database is offline or empty
-const FALLBACK_TENDERS = [
-  {
-    id: '30000000-0000-0000-0000-000000000001',
-    slug: 'procurement-of-450-high-performance-laptops-and-it-infrastructure-wb-kh-2026-0891',
-    reference_number: 'WB/GDIPP/G/2026/014',
-    title: 'Procurement of 450 High-Performance Laptops and IT Infrastructure for Digital Education Project',
-    organization: { name_en: 'World Bank Cambodia / MoEYS' },
-    category: { slug: 'it-telecom', name_en: 'IT, Computers & Telecom' },
-    source: { name: 'World Bank Cambodia', code: 'world_bank_kh' },
-    deadline: new Date(Date.now() + 24 * 24 * 60 * 60 * 1000).toISOString(),
-    published_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-    estimated_value: 285000,
-    currency: 'USD',
-    location: 'Phnom Penh & 12 Provinces',
-    confidence_score: 98,
-  }
-]
-
+// Seed fallback removed: listing fabricated demo rows linked to detail pages
+// that do not exist. The empty state below renders when the DB has no rows.
 export default async function TendersPage({
   searchParams,
 }: {
@@ -45,7 +28,7 @@ export default async function TendersPage({
   const categoryFilter = params.category || ''
   const sourceFilter = params.source || ''
 
-  let tenders = FALLBACK_TENDERS
+  let tenders: any[] = []
 
   // Attempt live Supabase query
   if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {

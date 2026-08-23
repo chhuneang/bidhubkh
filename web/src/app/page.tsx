@@ -33,27 +33,11 @@ const CATEGORIES = [
   { slug: 'consulting-services', nameEn: 'Consulting & Advisory', nameKm: 'សេវាប្រឹក្សាយោបល់', count: 15, icon: Briefcase, color: 'text-indigo-600 bg-indigo-50' },
 ]
 
-// Fallback featured tenders
-const FEATURED_TENDERS = [
-  {
-    id: '1',
-    slug: 'procurement-of-450-high-performance-laptops-and-it-infrastructure-wb-kh-2026-0891',
-    title: 'Procurement of 450 High-Performance Laptops and IT Infrastructure for Digital Education Project',
-    organization: 'World Bank Cambodia / MoEYS',
-    category: 'IT, Computers & Telecom',
-    deadline: new Date(Date.now() + 24 * 24 * 60 * 60 * 1000).toISOString(),
-    publishedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-    estimatedValue: 285000,
-    currency: 'USD',
-    source: 'World Bank Cambodia',
-    location: 'Phnom Penh & 12 Provinces',
-    confidenceScore: 98,
-  }
-]
-
+// Fallback featured tenders removed: fabricated demo rows linked to detail
+// pages that do not exist. Empty state renders when the DB returns nothing.
 export default async function HomePage() {
-  let liveTenders: any[] = FEATURED_TENDERS
-  let totalTenderCount = 41
+  let liveTenders: any[] = []
+  let totalTenderCount = 0
 
   if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     try {
@@ -339,7 +323,11 @@ export default async function HomePage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {liveTenders.map((tender) => {
+              {liveTenders.length === 0 ? (
+                <p className="col-span-full text-center text-sm text-slate-500 font-medium py-10">
+                  Live tenders are being synced from official sources — check back shortly.
+                </p>
+              ) : liveTenders.map((tender) => {
                 const remaining = getDaysRemaining(tender.deadline)
                 return (
                   <div

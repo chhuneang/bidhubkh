@@ -28,43 +28,6 @@ import { BidDecisionMatrixCard } from '@/components/tenders/BidDecisionMatrixCar
 import { calculateSupplierMatch } from '@/lib/matching'
 import { computeBidDecision } from '@/lib/decision_matrix'
 
-// Default fallback sample tender
-const FALLBACK_TENDER = {
-  id: '30000000-0000-0000-0000-000000000001',
-  slug: 'procurement-of-450-high-performance-laptops-and-it-infrastructure-wb-kh-2026-0891',
-  reference_number: 'WB/GDIPP/G/2026/014',
-  title: 'Procurement of 450 High-Performance Laptops and IT Infrastructure for Digital Education Project',
-  organization: { name_en: 'The World Bank Cambodia Country Office / MoEYS' },
-  category: { name_en: 'IT, Computers & Telecom' },
-  source: { name: 'World Bank Cambodia' },
-  deadline: new Date(Date.now() + 24 * 24 * 60 * 60 * 1000).toISOString(),
-  published_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-  estimated_value: 285000,
-  currency: 'USD',
-  location: 'Phnom Penh & 12 Provinces (Secondary School Computer Labs)',
-  procurement_method: 'National Competitive Bidding (NCB)',
-  original_url: 'https://projects.worldbank.org/en/projects-operations/procurement-notices?countrycode_exact=KH',
-  confidence_score: 98,
-  summary: 'The Ministry of Education, Youth and Sport (MoEYS) financed by World Bank is seeking qualified Cambodian IT suppliers to deliver 450 enterprise laptops, 24 server rack cabinets, and UPS units to modernise digital learning laboratories.',
-  description: 'Supply, delivery, and setup of 450 enterprise laptops, server racks, and uninterruptible power supplies (UPS) for secondary school computer labs across 12 provinces in Cambodia.',
-  products_services: [
-    '450x Enterprise Core i7/16GB/512GB SSD Laptops with Pre-installed OS',
-    '24x 42U Server Rack Cabinets with PDU and Cable Management',
-    '24x 3kVA Online Uninterruptible Power Supply (UPS) units',
-    '150x Cat6 Gigabit 24-Port Managed Layer-2 Switches',
-  ],
-  requirements: [
-    'Valid Certificate of Tax Compliance (GDT) and Ministry of Commerce Registration.',
-    'Manufacturer Authorization Form (MAF) for all core computing hardware.',
-    'Proof of at least 3 completed IT hardware supply contracts of similar scale (> USD 100k) within the last 5 years.',
-    'Established physical technical service center presence in Phnom Penh with provincial support dispatch capability.',
-  ],
-  tender_documents: [
-    { name: 'Standard Bidding Document (SBD) - Goods.pdf', document_type: 'Bidding Document', original_url: 'https://projects.worldbank.org/en/projects-operations/procurement-notices?countrycode_exact=KH' },
-    { name: 'Technical Specifications & Provincial Lab Distribution List.pdf', document_type: 'TOR / Specs', original_url: 'https://projects.worldbank.org/en/projects-operations/procurement-notices?countrycode_exact=KH' },
-  ]
-}
-
 export default async function TenderDetailPage({
   params,
 }: {
@@ -120,17 +83,11 @@ export default async function TenderDetailPage({
     }
   }
 
-  // Fallback if not found or offline
+  // No published+approved match (or Supabase unreachable): serve a real 404
+  // instead of fabricating content — stale or hand-typed links must not
+  // render invented procurement data.
   if (!tender) {
-    if (slug === FALLBACK_TENDER.slug || slug.includes('wb-kh') || slug.includes('450-high-performance-laptops')) {
-      tender = FALLBACK_TENDER
-    } else {
-      tender = {
-        ...FALLBACK_TENDER,
-        slug: slug,
-        title: decodeURIComponent(slug).replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
-      }
-    }
+    notFound()
   }
 
   const remaining = getDaysRemaining(tender.deadline)
