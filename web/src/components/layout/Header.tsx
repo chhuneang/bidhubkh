@@ -11,6 +11,7 @@ import {
   Bookmark,
   ShieldCheck,
   LayoutDashboard,
+  Building2,
   User,
   Menu,
   X,
@@ -138,7 +139,7 @@ export function Header() {
                 href="/signup"
                 className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-md shadow-blue-600/20 hover:bg-blue-700 transition-all hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
               >
-                <Sparkles className="h-3.5 w-3.5 text-yellow-300 animate-pulse" />
+                <Building2 className="h-3.5 w-3.5" />
                 <span>Supplier Portal</span>
               </Link>
             </>
