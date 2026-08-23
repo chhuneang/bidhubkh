@@ -52,17 +52,17 @@ export default async function AdminPage() {
       // 3. Live sources
       const { data: dbSources } = await supabase
         .from('sources')
-        .select('*')
+        .select('*, raw_tenders(count)')
         .order('created_at', { ascending: true })
 
       if (dbSources && dbSources.length > 0) {
-        sources = dbSources.map((s) => ({
+        sources = dbSources.map((s: any) => ({
           code: s.code,
           name: s.name,
-          method: s.access_method.toUpperCase(),
+          method: (s.access_method || 'scraper').toUpperCase(),
           status: s.active ? 'healthy' : 'disabled',
           lastChecked: s.last_checked_at ? formatDate(s.last_checked_at) : 'Active',
-          itemsCollected: s.code === 'world_bank_kh' ? 50 : s.code === 'adb_kh' ? 2 : 0
+          itemsCollected: s.raw_tenders?.[0]?.count ?? 0
         }))
       }
 

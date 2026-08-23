@@ -39,12 +39,16 @@ Welcome, AI Agent! This document tracks the exact architectural decisions, compl
 - Loaded seed taxonomies (`001_categories.sql`, `002_sources.sql`, `003_sample_tenders.sql`).
 - Generated TypeScript types directly into [web/src/types/database.types.ts](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/web/src/types/database.types.ts).
 
-### Milestone 03 & 04 — Live Ingestion Adapters & Supabase Upsert
+### Milestone 03 & 04 + Expansion Pack — 6 Live Ingestion Adapters & Supabase Upsert
 - Built abstract adapter contract in [scraper/sources/base.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/sources/base.py).
 - **Source #1 (World Bank Cambodia API)**: [scraper/sources/world_bank.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/sources/world_bank.py).
 - **Source #2 (Asian Development Bank Cambodia)**: [scraper/sources/adb.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/sources/adb.py).
-- **Source #3 (Cambodian Government MEF / GDPP)**: [scraper/sources/mef.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/sources/mef.py) — Ingests official national procurement packages across ministries (Tax/Customs GDT, Public Works MPWT, Education MoEYS, Health MoH).
-- Built [scraper/pipeline.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/pipeline.py) and [scraper/ingest.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/ingest.py). Actively tested and writing live data directly to Supabase (`raw_tenders` and `tenders`).
+- **Source #3 (Cambodian Government MEF / GDPP)**: [scraper/sources/mef.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/sources/mef.py) — Ingests official national procurement packages across ministries.
+- **Source #4 (UN Global Marketplace - UNGM)**: [scraper/sources/ungm.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/sources/ungm.py) — UNDP, UNICEF, WHO, WFP, UNOPS Cambodia.
+- **Source #5 (Cambodia NGO & Civil Society)**: [scraper/sources/ngo_cambodia.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/sources/ngo_cambodia.py) — ReliefWeb & NGO procurement.
+- **Source #6 (State-Owned Utilities EDC / PPWSA)**: [scraper/sources/state_utilities.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/sources/state_utilities.py) — Electricité du Cambodge & Water Authority.
+- **Deep AI PDF Attachment Parser**: [scraper/extractors/pdf_parser.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/extractors/pdf_parser.py).
+- **Autonomous Ingestion Scheduler**: [scraper/scheduler.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/scheduler.py).
 
 ### Milestone 07 — User Authentication & Supplier Dashboard
 - Built Supabase Auth integration:
