@@ -21,6 +21,7 @@ import {
   Layers,
   MapPin
 } from 'lucide-react'
+import { SaveTenderButton } from '@/components/tenders/SaveTenderButton'
 
 // Default fallback sample tender
 const FALLBACK_TENDER = {
@@ -66,6 +67,7 @@ export default async function TenderDetailPage({
 }) {
   const { slug } = await params
   let tender: any = null
+  let isSaved = false
 
   // Fetch live from Supabase
   if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
@@ -90,6 +92,18 @@ export default async function TenderDetailPage({
           category: data.categories,
           source: data.sources,
         }
+      }
+
+      // Check if logged in user has saved this tender
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user && data) {
+        const { data: savedRow } = await supabase
+          .from('saved_tenders')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('tender_id', data.id)
+          .maybeSingle()
+        if (savedRow) isSaved = true
       }
     } catch (err) {
       console.error('Failed to fetch tender:', err)
@@ -294,13 +308,7 @@ export default async function TenderDetailPage({
                   <ExternalLink className="h-3.5 w-3.5" />
                 </a>
 
-                <button
-                  type="button"
-                  className="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-900/60 px-4 py-3 text-xs font-semibold text-slate-200 hover:border-slate-600 hover:text-white transition-all"
-                >
-                  <Bookmark className="h-3.5 w-3.5 text-blue-400" />
-                  Save to Bid Pipeline
-                </button>
+                <SaveTenderButton tenderId={tender.id} initialSaved={isSaved} />
               </div>
 
               {/* Confidence Badge */}

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Search, Bell, ShieldCheck, Compass, Bookmark, LayoutDashboard } from 'lucide-react'
+import { Search, Bell, ShieldCheck, Compass, Bookmark, LayoutDashboard, User } from 'lucide-react'
 
 export function Header() {
   return (
@@ -26,15 +26,13 @@ export function Header() {
             <Link href="/tenders" className="hover:text-blue-400 transition-colors">
               Find Tenders
             </Link>
-            <Link href="/organizations" className="hover:text-blue-400 transition-colors">
-              Organizations
+            <Link href="/dashboard" className="hover:text-blue-400 transition-colors flex items-center gap-1.5">
+              <Bookmark className="h-3.5 w-3.5 text-blue-400" />
+              Bid Pipeline
             </Link>
-            <Link href="/categories" className="hover:text-blue-400 transition-colors">
-              Categories
-            </Link>
-            <Link href="/alerts" className="hover:text-blue-400 transition-colors flex items-center gap-1.5">
-              <Bell className="h-3.5 w-3.5 text-blue-400" />
-              Alerts
+            <Link href="/admin" className="hover:text-blue-400 transition-colors flex items-center gap-1.5">
+              <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
+              Sources Health
             </Link>
           </nav>
         </div>
@@ -42,16 +40,16 @@ export function Header() {
         {/* Right Action Buttons */}
         <div className="flex items-center gap-3">
           <Link
-            href="/admin"
-            className="hidden sm:flex items-center gap-1.5 rounded-lg border border-slate-700/60 bg-slate-900/50 px-3 py-1.5 text-xs font-medium text-slate-300 hover:border-slate-600 hover:text-white transition-all"
+            href="/login"
+            className="hidden sm:flex items-center gap-1.5 rounded-xl border border-slate-800 bg-slate-900/60 px-3.5 py-2 text-xs font-medium text-slate-300 hover:border-slate-700 hover:text-white transition-all"
           >
-            <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
-            Admin Console
+            <User className="h-3.5 w-3.5 text-slate-400" />
+            Sign In
           </Link>
 
           <Link
             href="/dashboard"
-            className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-blue-600/30 hover:bg-blue-500 transition-all active:scale-95"
+            className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-blue-600/30 hover:bg-blue-500 transition-all active:scale-95 cursor-pointer"
           >
             <LayoutDashboard className="h-3.5 w-3.5" />
             Supplier Portal

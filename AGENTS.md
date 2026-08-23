@@ -46,6 +46,17 @@ Welcome, AI Agent! This document tracks the exact architectural decisions, compl
 - **Source #3 (Cambodian Government MEF / GDPP)**: [scraper/sources/mef.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/sources/mef.py) — Ingests official national procurement packages across ministries (Tax/Customs GDT, Public Works MPWT, Education MoEYS, Health MoH).
 - Built [scraper/pipeline.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/pipeline.py) and [scraper/ingest.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/ingest.py). Actively tested and writing live data directly to Supabase (`raw_tenders` and `tenders`).
 
+### Milestone 07 — User Authentication & Supplier Dashboard
+- Built Supabase Auth integration:
+  - `/login` ([web/src/app/login/page.tsx](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/web/src/app/login/page.tsx)) — Email/Password & Google Workspace OAuth with Suspense handling.
+  - `/signup` ([web/src/app/signup/page.tsx](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/web/src/app/signup/page.tsx)) — Supplier onboarding and automatic company record provisioning.
+  - `/auth/callback` ([web/src/app/auth/callback/route.ts](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/web/src/app/auth/callback/route.ts)) — Secure PKCE OAuth session exchange.
+- Built **Supplier Dashboard** (`/dashboard`):
+  - **Saved Bids Pipeline**: Interactive stage management (*Interested → Reviewing Specs → Preparing Bid → Submitted → Won 🎉 / Lost*), tracking total pipeline value in USD.
+  - **Company Profile & Catalog**: Edit business name, GDT Tax ID, MoC number, operating location, and description.
+  - **Tender Alert Rules**: Automated notification rule creation and management.
+- Built interactive [SaveTenderButton.tsx](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/web/src/components/tenders/SaveTenderButton.tsx) component wired to Supabase `saved_tenders`.
+
 ### Milestone 08 — AI Tender Intelligence & Multi-Provider Engine
 - Built unified multi-provider AI extraction engine in [scraper/extractors/ai_extractor.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/extractors/ai_extractor.py).
 - Supported AI providers:
@@ -58,12 +69,12 @@ Welcome, AI Agent! This document tracks the exact architectural decisions, compl
 
 ## 📋 Recommended Next Steps for the Next AI Agent
 
-1. **User Authentication & Supplier Company Profiles (Milestones 07 & 09)**:
-   - Wire Supabase Auth (Email/Password & Google OAuth) to `/login` and `/dashboard` for supplier profiles, bookmarked tenders, and email/Telegram alert subscriptions.
-2. **AI Supplier Matching (Milestone 09)**:
+1. **AI Supplier Matching (Milestone 09)**:
    - Match company product catalogs against extracted tender requirements to calculate qualification match percentages (e.g. "92% Match").
-3. **Source #4: UNGM & NGO Procurement Portals**:
-   - Add UN Global Marketplace (UNGM Cambodia) and NGO procurement adapters.
+2. **Monetization & Subscription Plans (Milestone 10)**:
+   - Configurable tier limits (Free, Pro, Business) for AI tender intelligence and export capabilities.
+3. **Advanced Bid / No-Bid Intelligence (Milestone 11)**:
+   - Win probability calculator, risk analysis, and automated executive bid checklists.
 
 ---
 
