@@ -1,0 +1,145 @@
+import os
+import hashlib
+import json
+from datetime import datetime
+from typing import List, Optional
+from dotenv import load_dotenv
+from scraper.sources.base import BaseSource, RawTenderData, NormalizedTenderData
+
+load_dotenv()
+
+class IngestionPipeline:
+    """
+    Executes extraction, deduplication, and database ingestion workflow.
+    Integrates directly with Supabase PostgreSQL if configured.
+    """
+    def __init__(self):
+        self.supabase_url = os.getenv("SUPABASE_URL")
+        self.supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_ANON_KEY")
+        self.client = None
+
+        if self.supabase_url and self.supabase_key and "your-project" not in self.supabase_url:
+            try:
+                from supabase import create_client
+                self.client = create_client(self.supabase_url, self.supabase_key)
+                print(f"[Pipeline] Connected to Supabase DB: {self.supabase_url[:24]}...")
+            except Exception as e:
+                print(f"[Pipeline] Supabase connection skipped: {e}")
+
+    def compute_content_hash(self, payload: dict) -> str:
+        serialized = json.dumps(payload, sort_keys=True, default=str)
+        return hashlib.sha256(serialized.encode('utf-8')).hexdigest()
+
+    def get_source_id(self, source_code: str) -> Optional[str]:
+        if not self.client:
+            return None
+        try:
+            res = self.client.from_("sources").select("id").eq("code", source_code).limit(1).execute()
+            if res.data and len(res.data) > 0:
+                return res.data[0]["id"]
+        except Exception as e:
+            print(f"[Pipeline] Failed to resolve source_id for {source_code}: {e}")
+        return None
+
+    def get_category_id(self, category_slug: str) -> Optional[str]:
+        if not self.client or not category_slug:
+            return None
+        try:
+            res = self.client.from_("categories").select("id").eq("slug", category_slug).limit(1).execute()
+            if res.data and len(res.data) > 0:
+                return res.data[0]["id"]
+        except Exception:
+            pass
+        return None
+
+    def get_org_id(self, org_slug: str) -> Optional[str]:
+        if not self.client or not org_slug:
+            return None
+        try:
+            res = self.client.from_("organizations").select("id").eq("slug", org_slug).limit(1).execute()
+            if res.data and len(res.data) > 0:
+                return res.data[0]["id"]
+        except Exception:
+            pass
+        return None
+
+    def run_source(self, source: BaseSource) -> dict:
+        print(f"\n==========================================")
+        print(f"[Pipeline] Starting collection for: {source.name}")
+        print(f"==========================================")
+        
+        raw_items = source.fetch_raw()
+        print(f"[Pipeline] Retrieved {len(raw_items)} raw items from {source.code}.")
+
+        processed_count = 0
+        duplicate_count = 0
+        error_count = 0
+
+        source_id = self.get_source_id(source.code)
+
+        for raw in raw_items:
+            content_hash = self.compute_content_hash(raw.raw_payload)
+            normalized = source.parse_and_normalize(raw)
+
+            # Ingestion print summary
+            print(f"  -> [{normalized.category_slug}] {normalized.title[:65]}...")
+
+            if self.client and source_id:
+                try:
+                    # 1. Upsert raw_tenders
+                    raw_record = {
+                        "source_id": source_id,
+                        "external_id": raw.external_id,
+                        "source_url": raw.source_url,
+                        "raw_title": raw.title,
+                        "raw_description": raw.description,
+                        "raw_payload": raw.raw_payload,
+                        "content_hash": content_hash,
+                        "status": "processed"
+                    }
+                    raw_res = self.client.from_("raw_tenders").upsert(raw_record, on_conflict="source_id, external_id").execute()
+                    raw_tender_id = raw_res.data[0]["id"] if raw_res.data else None
+
+                    # 2. Upsert tenders
+                    cat_id = self.get_category_id(normalized.category_slug)
+                    org_id = self.get_org_id(normalized.organization_slug)
+
+                    tender_record = {
+                        "raw_tender_id": raw_tender_id,
+                        "source_id": source_id,
+                        "organization_id": org_id,
+                        "category_id": cat_id,
+                        "external_id": normalized.external_id,
+                        "reference_number": normalized.reference_number,
+                        "title": normalized.title,
+                        "slug": normalized.slug,
+                        "summary": normalized.summary,
+                        "description": normalized.description,
+                        "location": normalized.location,
+                        "published_at": normalized.published_at.isoformat(),
+                        "deadline": normalized.deadline.isoformat() if normalized.deadline else None,
+                        "estimated_value": normalized.estimated_value,
+                        "currency": normalized.currency,
+                        "procurement_method": normalized.procurement_method,
+                        "eligibility": normalized.eligibility,
+                        "original_url": normalized.original_url,
+                        "confidence_score": normalized.confidence_score,
+                        "status": "published",
+                        "moderation_status": "approved"
+                    }
+                    self.client.from_("tenders").upsert(tender_record, on_conflict="slug").execute()
+                except Exception as db_err:
+                    error_count += 1
+                    print(f"     [DB Warning] {db_err}")
+
+            processed_count += 1
+
+        summary = {
+            "source_code": source.code,
+            "raw_total": len(raw_items),
+            "processed": processed_count,
+            "duplicates": duplicate_count,
+            "errors": error_count,
+        }
+        print(f"[Pipeline] Finished {source.code}: {summary}")
+        return summary
