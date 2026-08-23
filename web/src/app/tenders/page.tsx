@@ -82,18 +82,37 @@ const FALLBACK_TENDERS = [
 export default async function TendersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; category?: string }>
+  searchParams: Promise<{ q?: string; category?: string; source?: string }>
 }) {
   const params = await searchParams
   const query = (params.q || '').toLowerCase()
   const categoryFilter = params.category || ''
+  const sourceFilter = params.source || ''
 
   let tenders = FALLBACK_TENDERS
+  let sourcesList: any[] = []
+  let categoriesList: any[] = []
 
   // Attempt live Supabase query if credentials are set
   if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     try {
       const supabase = await createClient()
+
+      // Fetch active sources for filter chips
+      const { data: dbSources } = await supabase
+        .from('sources')
+        .select('code, name')
+        .eq('active', true)
+        .order('name', { ascending: true })
+      if (dbSources) sourcesList = dbSources
+
+      // Fetch categories
+      const { data: dbCats } = await supabase
+        .from('categories')
+        .select('slug, name_en')
+        .order('sort_order', { ascending: true })
+      if (dbCats) categoriesList = dbCats
+
       let dbQuery = supabase
         .from('tenders')
         .select(`
@@ -109,7 +128,7 @@ export default async function TendersPage({
           confidence_score,
           organizations (name_en),
           categories (slug, name_en),
-          sources (name)
+          sources (code, name)
         `)
         .eq('status', 'published')
         .order('published_at', { ascending: false })
@@ -143,7 +162,10 @@ export default async function TendersPage({
     const matchesCategory =
       !categoryFilter || tender.category?.slug === categoryFilter
 
-    return matchesQuery && matchesCategory
+    const matchesSource =
+      !sourceFilter || (tender.source as any)?.code === sourceFilter
+
+    return matchesQuery && matchesCategory && matchesSource
   })
 
   return (
@@ -159,80 +181,182 @@ export default async function TendersPage({
                 Cambodian Tender Catalog
               </h1>
               <p className="text-sm text-slate-400 mt-1">
-                Showing {filteredTenders.length} verified procurement notices across Cambodia
+                Aggregating {filteredTenders.length} official opportunities from 6 verified procurement sources
               </p>
             </div>
 
             {/* In-page search bar */}
-            <form action="/tenders" method="GET" className="glass-panel rounded-xl p-1.5 flex items-center gap-2 border border-slate-800 w-full md:w-96">
-              <Search className="h-4 w-4 text-slate-400 ml-2" />
+            <form
+              action="/tenders"
+              method="GET"
+              className="flex items-center gap-2 rounded-xl bg-slate-900 border border-slate-800 px-3.5 py-2 w-full md:w-80 shadow-sm focus-within:border-blue-500 transition-colors"
+            >
+              <Search className="h-4 w-4 text-slate-400 shrink-0" />
               <input
                 type="text"
                 name="q"
                 defaultValue={params.q || ''}
-                placeholder="Filter keywords, ministry..."
-                className="bg-transparent text-sm text-white placeholder-slate-500 focus:outline-none w-full"
+                placeholder="Search keywords, ministry..."
+                className="bg-transparent text-xs text-white placeholder-slate-500 focus:outline-none w-full"
               />
+              {categoryFilter && <input type="hidden" name="category" value={categoryFilter} />}
+              {sourceFilter && <input type="hidden" name="source" value={sourceFilter} />}
               <button
                 type="submit"
-                className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-3.5 py-1.5 rounded-lg transition-colors"
+                className="bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-semibold px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
               >
-                Filter
+                Search
               </button>
             </form>
           </div>
 
-          {/* Category Filter Pills */}
-          <div className="mt-6 flex flex-wrap items-center gap-2 border-b border-slate-800/80 pb-4">
+          {/* Sources Filter Pills */}
+          <div className="mt-6 flex flex-wrap items-center gap-2 border-b border-slate-800/80 pb-3">
+            <span className="text-[11px] uppercase font-bold text-slate-500 mr-2 tracking-wider">Source:</span>
             <Link
-              href="/tenders"
-              className={`text-xs px-3 py-1.5 rounded-full font-medium transition-all ${
-                !categoryFilter
-                  ? 'bg-blue-600 text-white shadow-sm'
+              href={`/tenders${categoryFilter ? `?category=${categoryFilter}` : ''}`}
+              className={`text-xs px-3 py-1 rounded-full font-medium transition-all ${
+                !sourceFilter
+                  ? 'bg-blue-600 text-white shadow-sm font-semibold'
                   : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
               }`}
             >
-              All Categories
+              All 6 Sources
             </Link>
             <Link
-              href="/tenders?category=it-telecom"
-              className={`text-xs px-3 py-1.5 rounded-full font-medium transition-all ${
+              href={`/tenders?source=world_bank_kh${categoryFilter ? `&category=${categoryFilter}` : ''}`}
+              className={`text-xs px-3 py-1 rounded-full font-medium transition-all ${
+                sourceFilter === 'world_bank_kh'
+                  ? 'bg-blue-600 text-white shadow-sm font-semibold'
+                  : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+              }`}
+            >
+              World Bank
+            </Link>
+            <Link
+              href={`/tenders?source=adb_kh${categoryFilter ? `&category=${categoryFilter}` : ''}`}
+              className={`text-xs px-3 py-1 rounded-full font-medium transition-all ${
+                sourceFilter === 'adb_kh'
+                  ? 'bg-blue-600 text-white shadow-sm font-semibold'
+                  : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+              }`}
+            >
+              ADB Cambodia
+            </Link>
+            <Link
+              href={`/tenders?source=mef_gdipp${categoryFilter ? `&category=${categoryFilter}` : ''}`}
+              className={`text-xs px-3 py-1 rounded-full font-medium transition-all ${
+                sourceFilter === 'mef_gdipp'
+                  ? 'bg-blue-600 text-white shadow-sm font-semibold'
+                  : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+              }`}
+            >
+              Cambodian Gov (MEF)
+            </Link>
+            <Link
+              href={`/tenders?source=ungm${categoryFilter ? `&category=${categoryFilter}` : ''}`}
+              className={`text-xs px-3 py-1 rounded-full font-medium transition-all ${
+                sourceFilter === 'ungm'
+                  ? 'bg-blue-600 text-white shadow-sm font-semibold'
+                  : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+              }`}
+            >
+              UNGM (United Nations)
+            </Link>
+            <Link
+              href={`/tenders?source=ngo_cambodia${categoryFilter ? `&category=${categoryFilter}` : ''}`}
+              className={`text-xs px-3 py-1 rounded-full font-medium transition-all ${
+                sourceFilter === 'ngo_cambodia'
+                  ? 'bg-blue-600 text-white shadow-sm font-semibold'
+                  : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+              }`}
+            >
+              NGO Portals
+            </Link>
+            <Link
+              href={`/tenders?source=state_utilities${categoryFilter ? `&category=${categoryFilter}` : ''}`}
+              className={`text-xs px-3 py-1 rounded-full font-medium transition-all ${
+                sourceFilter === 'state_utilities'
+                  ? 'bg-blue-600 text-white shadow-sm font-semibold'
+                  : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+              }`}
+            >
+              State Utilities (EDC / PPWSA)
+            </Link>
+          </div>
+
+          {/* Category Filter Pills */}
+          <div className="mt-3 flex flex-wrap items-center gap-2 pb-2">
+            <span className="text-[11px] uppercase font-bold text-slate-500 mr-2 tracking-wider">Sector:</span>
+            <Link
+              href={`/tenders${sourceFilter ? `?source=${sourceFilter}` : ''}`}
+              className={`text-xs px-3 py-1 rounded-full font-medium transition-all ${
+                !categoryFilter
+                  ? 'bg-indigo-600 text-white shadow-sm font-semibold'
+                  : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+              }`}
+            >
+              All Sectors
+            </Link>
+            <Link
+              href={`/tenders?category=it-telecom${sourceFilter ? `&source=${sourceFilter}` : ''}`}
+              className={`text-xs px-3 py-1 rounded-full font-medium transition-all ${
                 categoryFilter === 'it-telecom'
-                  ? 'bg-blue-600 text-white shadow-sm'
+                  ? 'bg-indigo-600 text-white shadow-sm font-semibold'
                   : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
               }`}
             >
               IT & Telecom
             </Link>
             <Link
-              href="/tenders?category=construction-civil"
-              className={`text-xs px-3 py-1.5 rounded-full font-medium transition-all ${
+              href={`/tenders?category=construction-civil${sourceFilter ? `&source=${sourceFilter}` : ''}`}
+              className={`text-xs px-3 py-1 rounded-full font-medium transition-all ${
                 categoryFilter === 'construction-civil'
-                  ? 'bg-blue-600 text-white shadow-sm'
+                  ? 'bg-indigo-600 text-white shadow-sm font-semibold'
                   : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
               }`}
             >
               Construction & Civil
             </Link>
             <Link
-              href="/tenders?category=medical-healthcare"
-              className={`text-xs px-3 py-1.5 rounded-full font-medium transition-all ${
+              href={`/tenders?category=medical-healthcare${sourceFilter ? `&source=${sourceFilter}` : ''}`}
+              className={`text-xs px-3 py-1 rounded-full font-medium transition-all ${
                 categoryFilter === 'medical-healthcare'
-                  ? 'bg-blue-600 text-white shadow-sm'
+                  ? 'bg-indigo-600 text-white shadow-sm font-semibold'
                   : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
               }`}
             >
-              Medical Supplies
+              Medical & Health
             </Link>
             <Link
-              href="/tenders?category=consulting-services"
-              className={`text-xs px-3 py-1.5 rounded-full font-medium transition-all ${
-                categoryFilter === 'consulting-services'
-                  ? 'bg-blue-600 text-white shadow-sm'
+              href={`/tenders?category=electrical-energy${sourceFilter ? `&source=${sourceFilter}` : ''}`}
+              className={`text-xs px-3 py-1 rounded-full font-medium transition-all ${
+                categoryFilter === 'electrical-energy'
+                  ? 'bg-indigo-600 text-white shadow-sm font-semibold'
                   : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
               }`}
             >
-              Consulting
+              Energy & Solar
+            </Link>
+            <Link
+              href={`/tenders?category=agriculture-water${sourceFilter ? `&source=${sourceFilter}` : ''}`}
+              className={`text-xs px-3 py-1 rounded-full font-medium transition-all ${
+                categoryFilter === 'agriculture-water'
+                  ? 'bg-indigo-600 text-white shadow-sm font-semibold'
+                  : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+              }`}
+            >
+              Water & Infrastructure
+            </Link>
+            <Link
+              href={`/tenders?category=consulting-services${sourceFilter ? `&source=${sourceFilter}` : ''}`}
+              className={`text-xs px-3 py-1 rounded-full font-medium transition-all ${
+                categoryFilter === 'consulting-services'
+                  ? 'bg-indigo-600 text-white shadow-sm font-semibold'
+                  : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+              }`}
+            >
+              Consulting & Services
             </Link>
           </div>
         </div>
