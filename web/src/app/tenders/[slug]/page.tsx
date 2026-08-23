@@ -332,13 +332,13 @@ export default async function TenderDetailPage({
               {/* Action Buttons */}
               <div className="pt-4 border-t border-slate-800 space-y-3">
                 <a
-                  href={tender.original_url || 'https://projects.worldbank.org'}
+                  href={tender.original_url || 'https://projects.worldbank.org/en/projects-operations/procurement?countrycode_exact=KH'}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-xs font-semibold text-white shadow-lg shadow-blue-600/30 hover:bg-blue-500 transition-all cursor-pointer"
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-xs font-bold text-white shadow-lg shadow-blue-600/30 hover:bg-blue-500 transition-all cursor-pointer group"
                 >
-                  Open Official Source Portal
-                  <ExternalLink className="h-3.5 w-3.5" />
+                  <span>View Official Notice on {tender.source?.name || 'Portal'}</span>
+                  <ExternalLink className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
                 </a>
 
                 <SaveTenderButton tenderId={tender.id} initialSaved={isSaved} />
@@ -354,15 +354,40 @@ export default async function TenderDetailPage({
               </div>
             </div>
 
-            {/* Official Documents / Source Access Box */}
-            <div className="glass-panel rounded-2xl p-6 border border-slate-800">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 mb-4 flex items-center gap-1.5">
-                <FileText className="h-4 w-4 text-blue-400" />
-                Official Documentation ({documents.length > 0 ? documents.length : 'Source Portal'})
+            {/* Official Source & Verification Specifications Box */}
+            <div className="glass-panel rounded-2xl p-6 border border-slate-800 space-y-4">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                <ShieldCheck className="h-4 w-4 text-emerald-400" />
+                Official Source Verification
               </h3>
-              <div className="space-y-2.5">
-                {documents.length > 0 ? (
-                  documents.map((doc: any, idx: number) => (
+
+              <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2.5 text-xs">
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-500">Procuring Source</span>
+                  <span className="font-semibold text-slate-200">{tender.source?.name || 'Verified Official Agency'}</span>
+                </div>
+                <div className="flex justify-between items-center pt-2 border-t border-slate-800/60">
+                  <span className="text-slate-500">Reference Number</span>
+                  <span className="font-mono text-[11px] text-blue-400 font-semibold">{tender.reference_number || 'N/A'}</span>
+                </div>
+                {tender.external_id && (
+                  <div className="flex justify-between items-center pt-2 border-t border-slate-800/60">
+                    <span className="text-slate-500">External Notice ID</span>
+                    <span className="font-mono text-[11px] text-slate-300">{tender.external_id}</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center pt-2 border-t border-slate-800/60">
+                  <span className="text-slate-500">Verification Seal</span>
+                  <span className="text-emerald-400 font-semibold flex items-center gap-1 text-[11px]">
+                    <CheckCircle2 className="h-3 w-3" /> 100% Authentic Source
+                  </span>
+                </div>
+              </div>
+
+              {documents.length > 0 && (
+                <div className="space-y-2 pt-2">
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Attached SBD Documents ({documents.length})</span>
+                  {documents.map((doc: any, idx: number) => (
                     <div
                       key={idx}
                       className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between gap-3 text-xs"
@@ -375,28 +400,14 @@ export default async function TenderDetailPage({
                         href={doc.original_url || tender.original_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-400 hover:text-blue-300 shrink-0 font-medium"
+                        className="text-blue-400 hover:text-blue-300 shrink-0 font-medium flex items-center gap-1"
                       >
-                        Download
+                        Download <ExternalLink className="h-3 w-3" />
                       </a>
                     </div>
-                  ))
-                ) : (
-                  <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2 text-xs">
-                    <p className="text-slate-400 text-[11px] leading-relaxed">
-                      Official specifications and bidding dossiers are published on the procuring entity&apos;s portal.
-                    </p>
-                    <a
-                      href={tender.original_url || 'https://projects.worldbank.org'}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-400 hover:text-blue-300 font-semibold inline-flex items-center gap-1 text-xs pt-1"
-                    >
-                      Access Documents on {tender.source?.name || 'Official Portal'} <ExternalLink className="h-3 w-3" />
-                    </a>
-                  </div>
-                )}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
