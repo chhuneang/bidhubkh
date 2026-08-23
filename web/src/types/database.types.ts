@@ -426,6 +426,7 @@ export type Database = {
         Row: {
           access_method: Database["public"]["Enums"]["source_access_method"]
           active: boolean
+          auto_approve: boolean
           check_frequency_hours: number
           code: string
           created_at: string
@@ -443,6 +444,7 @@ export type Database = {
         Insert: {
           access_method?: Database["public"]["Enums"]["source_access_method"]
           active?: boolean
+          auto_approve?: boolean
           check_frequency_hours?: number
           code: string
           created_at?: string
@@ -460,6 +462,7 @@ export type Database = {
         Update: {
           access_method?: Database["public"]["Enums"]["source_access_method"]
           active?: boolean
+          auto_approve?: boolean
           check_frequency_hours?: number
           code?: string
           created_at?: string
@@ -582,6 +585,8 @@ export type Database = {
           currency: string | null
           deadline: string | null
           description: string | null
+          duplicate_count: number
+          duplicate_of_id: string | null
           eligibility: string | null
           estimated_value: number | null
           external_id: string
@@ -606,6 +611,7 @@ export type Database = {
           summary: string | null
           title: string
           updated_at: string
+          validation_errors: Json | null
         }
         Insert: {
           category_id?: string | null
@@ -614,6 +620,8 @@ export type Database = {
           currency?: string | null
           deadline?: string | null
           description?: string | null
+          duplicate_count?: number
+          duplicate_of_id?: string | null
           eligibility?: string | null
           estimated_value?: number | null
           external_id: string
@@ -638,6 +646,7 @@ export type Database = {
           summary?: string | null
           title: string
           updated_at?: string
+          validation_errors?: Json | null
         }
         Update: {
           category_id?: string | null
@@ -646,6 +655,8 @@ export type Database = {
           currency?: string | null
           deadline?: string | null
           description?: string | null
+          duplicate_count?: number
+          duplicate_of_id?: string | null
           eligibility?: string | null
           estimated_value?: number | null
           external_id?: string
@@ -670,6 +681,7 @@ export type Database = {
           summary?: string | null
           title?: string
           updated_at?: string
+          validation_errors?: Json | null
         }
         Relationships: [
           {

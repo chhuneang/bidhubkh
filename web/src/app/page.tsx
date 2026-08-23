@@ -3,6 +3,7 @@ import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { formatCurrency, formatDate, getDaysRemaining } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/server'
+import { publicTenders, countPublicTenders } from '@/lib/tenders'
 import {
   Search,
   Sparkles,
@@ -58,31 +59,12 @@ export default async function HomePage() {
     try {
       const supabase = await createClient()
 
-      // 1. Live total count
-      const { count } = await supabase
-        .from('tenders')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'published')
+      // 1. Live total count (published + approved only)
+      const count = await countPublicTenders(supabase)
       if (count !== null) totalTenderCount = count
 
       // 2. Fetch latest 6 live tenders across all sources
-      const { data: dbTenders } = await supabase
-        .from('tenders')
-        .select(`
-          id,
-          slug,
-          title,
-          deadline,
-          published_at,
-          estimated_value,
-          currency,
-          location,
-          confidence_score,
-          organizations (name_en),
-          categories (slug, name_en),
-          sources (name, code)
-        `)
-        .eq('status', 'published')
+      const { data: dbTenders } = await publicTenders(supabase)
         .order('published_at', { ascending: false })
         .limit(6)
 

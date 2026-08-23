@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { createClient } from '@/lib/supabase/server'
+import { countPublicTenders, publicTenders } from '@/lib/tenders'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import {
   ShieldCheck,
@@ -123,11 +124,8 @@ export default async function SourcesPage() {
     try {
       const supabase = await createClient()
 
-      // 1. Fetch total tenders count
-      const { count: tendersCount } = await supabase
-        .from('tenders')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'published')
+      // 1. Fetch total tenders count (published + approved only)
+      const tendersCount = await countPublicTenders(supabase)
       if (typeof tendersCount === 'number') totalTenders = tendersCount
 
       // 2. Fetch raw payloads count
@@ -136,22 +134,8 @@ export default async function SourcesPage() {
         .select('*', { count: 'exact', head: true })
       if (typeof rawTendersCount === 'number') rawCount = rawTendersCount
 
-      // 3. Fetch recent tenders
-      const { data: dbTenders } = await supabase
-        .from('tenders')
-        .select(`
-          id,
-          title,
-          slug,
-          reference_number,
-          estimated_value,
-          currency,
-          confidence_score,
-          status,
-          published_at,
-          sources (name),
-          categories (name_en)
-        `)
+      // 3. Fetch recent tenders (shared public helper — published + approved)
+      const { data: dbTenders } = await publicTenders(supabase)
         .order('published_at', { ascending: false })
         .limit(8)
 

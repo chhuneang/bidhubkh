@@ -75,6 +75,7 @@ export default async function DashboardPage() {
       categories (name_en)
     `)
     .eq('status', 'published')
+    .eq('moderation_status', 'approved')
     .order('published_at', { ascending: false })
     .limit(10)
 

@@ -4,6 +4,7 @@ import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { formatCurrency, formatDate, getDaysRemaining } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/server'
+import { publicTenderBySlug } from '@/lib/tenders'
 import {
   ArrowLeft,
   Building2,
@@ -79,17 +80,8 @@ export default async function TenderDetailPage({
   if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     try {
       const supabase = await createClient()
-      const { data, error } = await supabase
-        .from('tenders')
-        .select(`
-          *,
-          organizations (name_en, slug, website_url),
-          categories (name_en, slug),
-          sources (name, website_url, code),
-          tender_documents (*)
-        `)
-        .eq('slug', slug)
-        .maybeSingle()
+      // Published + approved only: non-approved slugs fall into the fallback below.
+      const { data, error } = await publicTenderBySlug(supabase, slug).maybeSingle()
 
       if (!error && data) {
         tender = {

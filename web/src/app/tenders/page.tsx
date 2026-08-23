@@ -3,6 +3,7 @@ import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { formatCurrency, formatDate, getDaysRemaining } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/server'
+import { publicTenders } from '@/lib/tenders'
 import {
   Search,
   Building2,
@@ -51,24 +52,7 @@ export default async function TendersPage({
     try {
       const supabase = await createClient()
 
-      let dbQuery = supabase
-        .from('tenders')
-        .select(`
-          id,
-          slug,
-          reference_number,
-          title,
-          deadline,
-          published_at,
-          estimated_value,
-          currency,
-          location,
-          confidence_score,
-          organizations (name_en),
-          categories (slug, name_en),
-          sources (code, name)
-        `)
-        .eq('status', 'published')
+      let dbQuery = publicTenders(supabase)
         .order('published_at', { ascending: false })
 
       if (query) {

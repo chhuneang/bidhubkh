@@ -1,0 +1,3 @@
+# BidHubKH Ingestion Engine — Development / Test Dependencies
+-r requirements.txt
+pytest>=8.0.0
