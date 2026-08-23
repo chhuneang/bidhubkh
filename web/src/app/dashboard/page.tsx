@@ -57,6 +57,27 @@ export default async function DashboardPage() {
     .select('*')
     .order('name_en', { ascending: true })
 
+  // 5. Fetch Open Tenders for AI Recommendation Matching
+  const { data: openTenders } = await supabase
+    .from('tenders')
+    .select(`
+      id,
+      title,
+      slug,
+      reference_number,
+      estimated_value,
+      currency,
+      deadline,
+      products_services,
+      requirements,
+      summary,
+      sources (name),
+      categories (name_en)
+    `)
+    .eq('status', 'published')
+    .order('published_at', { ascending: false })
+    .limit(10)
+
   return (
     <div className="min-h-screen flex flex-col bg-[#090d16] text-slate-100">
       <Header />
@@ -68,6 +89,7 @@ export default async function DashboardPage() {
           savedTenders={savedTenders || []}
           alerts={alerts || []}
           categories={categories || []}
+          recommendedTenders={openTenders || []}
         />
       </main>
 

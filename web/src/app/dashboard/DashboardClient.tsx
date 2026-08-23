@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { formatCurrency, formatDate, getDaysRemaining } from '@/lib/utils'
+import { calculateSupplierMatch } from '@/lib/matching'
 import {
   updateSavedTenderStatus,
   deleteSavedTender,
@@ -29,7 +30,11 @@ import {
   CheckCircle2,
   Layers,
   ChevronRight,
-  Filter
+  Filter,
+  Check,
+  AlertTriangle,
+  Lightbulb,
+  Tag
 } from 'lucide-react'
 
 interface DashboardClientProps {
@@ -38,6 +43,7 @@ interface DashboardClientProps {
   savedTenders: any[]
   alerts: any[]
   categories: any[]
+  recommendedTenders?: any[]
 }
 
 const STAGES = [
@@ -55,14 +61,24 @@ export function DashboardClient({
   company: initialCompany,
   savedTenders,
   alerts,
-  categories
+  categories,
+  recommendedTenders = []
 }: DashboardClientProps) {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<'pipeline' | 'company' | 'alerts'>('pipeline')
+  const [activeTab, setActiveTab] = useState<'pipeline' | 'matches' | 'company' | 'alerts'>('pipeline')
   const [stageFilter, setStageFilter] = useState('all')
   const [isPending, startTransition] = useTransition()
   const [profileSuccess, setProfileSuccess] = useState(false)
   const [alertModalOpen, setAlertModalOpen] = useState(false)
+
+  // Rank recommended tenders by AI match score
+  const matchedOpportunities = recommendedTenders.map((tender) => {
+    const match = calculateSupplierMatch(tender, initialCompany)
+    return {
+      ...tender,
+      match
+    }
+  }).sort((a, b) => b.match.score - a.match.score)
 
   // Filtered saved tenders
   const filteredBids = stageFilter === 'all'
@@ -143,15 +159,6 @@ export function DashboardClient({
             <Plus className="h-3.5 w-3.5" />
             Explore New Tenders
           </Link>
-
-          <button
-            type="button"
-            onClick={() => logout()}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/80 px-3.5 py-2.5 text-xs font-medium text-slate-400 hover:text-rose-400 hover:border-rose-500/30 transition-all cursor-pointer"
-          >
-            <LogOut className="h-3.5 w-3.5" />
-            Sign Out
-          </button>
         </div>
       </div>
 
@@ -179,33 +186,35 @@ export function DashboardClient({
 
         <div className="glass-panel rounded-2xl p-5 border border-slate-800">
           <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
-            <span>Active Alerts</span>
-            <Bell className="h-4 w-4 text-amber-400" />
+            <span>Top AI Match</span>
+            <Sparkles className="h-4 w-4 text-indigo-400" />
           </div>
-          <div className="text-2xl font-extrabold text-white mt-2">{alerts.length} Rules</div>
-          <div className="text-[11px] text-amber-400 mt-1">Email & Telegram triggers</div>
+          <div className="text-2xl font-extrabold text-indigo-400 mt-2">
+            {matchedOpportunities.length > 0 ? `${matchedOpportunities[0].match.score}%` : 'N/A'}
+          </div>
+          <div className="text-[11px] text-slate-400 mt-1">Highest qualification fit</div>
         </div>
 
         <div className="glass-panel rounded-2xl p-5 border border-slate-800">
           <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
-            <span>AI Match Readiness</span>
-            <Sparkles className="h-4 w-4 text-cyan-400" />
+            <span>Company Tax Status</span>
+            <ShieldCheck className="h-4 w-4 text-cyan-400" />
           </div>
           <div className="text-2xl font-extrabold text-cyan-400 mt-2">
-            {initialCompany?.tax_id ? '95%' : '60%'}
+            {initialCompany?.tax_id ? 'Verified' : 'Pending'}
           </div>
           <div className="text-[11px] text-slate-400 mt-1">
-            {initialCompany?.tax_id ? 'Profile fully configured' : 'Add GDT Tax ID to boost score'}
+            {initialCompany?.tax_id ? initialCompany.tax_id : 'Add GDT Tax ID to qualify'}
           </div>
         </div>
       </div>
 
       {/* Tabs Navigation */}
-      <div className="flex items-center gap-2 border-b border-slate-800/80 pb-px">
+      <div className="flex items-center gap-2 border-b border-slate-800/80 pb-px overflow-x-auto">
         <button
           type="button"
           onClick={() => setActiveTab('pipeline')}
-          className={`flex items-center gap-2 px-4 py-3 text-xs font-semibold border-b-2 transition-all cursor-pointer ${
+          className={`flex items-center gap-2 px-4 py-3 text-xs font-semibold border-b-2 shrink-0 transition-all cursor-pointer ${
             activeTab === 'pipeline'
               ? 'border-blue-500 text-blue-400 bg-blue-500/5'
               : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -217,8 +226,21 @@ export function DashboardClient({
 
         <button
           type="button"
+          onClick={() => setActiveTab('matches')}
+          className={`flex items-center gap-2 px-4 py-3 text-xs font-semibold border-b-2 shrink-0 transition-all cursor-pointer ${
+            activeTab === 'matches'
+              ? 'border-blue-500 text-blue-400 bg-blue-500/5'
+              : 'border-transparent text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Sparkles className="h-4 w-4 text-indigo-400" />
+          AI Matched Opportunities ({matchedOpportunities.length})
+        </button>
+
+        <button
+          type="button"
           onClick={() => setActiveTab('company')}
-          className={`flex items-center gap-2 px-4 py-3 text-xs font-semibold border-b-2 transition-all cursor-pointer ${
+          className={`flex items-center gap-2 px-4 py-3 text-xs font-semibold border-b-2 shrink-0 transition-all cursor-pointer ${
             activeTab === 'company'
               ? 'border-blue-500 text-blue-400 bg-blue-500/5'
               : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -231,7 +253,7 @@ export function DashboardClient({
         <button
           type="button"
           onClick={() => setActiveTab('alerts')}
-          className={`flex items-center gap-2 px-4 py-3 text-xs font-semibold border-b-2 transition-all cursor-pointer ${
+          className={`flex items-center gap-2 px-4 py-3 text-xs font-semibold border-b-2 shrink-0 transition-all cursor-pointer ${
             activeTab === 'alerts'
               ? 'border-blue-500 text-blue-400 bg-blue-500/5'
               : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -245,7 +267,6 @@ export function DashboardClient({
       {/* TAB 1: SAVED BIDS PIPELINE */}
       {activeTab === 'pipeline' && (
         <div className="space-y-6">
-          {/* Stage filter pills */}
           <div className="flex items-center gap-2 overflow-x-auto pb-2">
             {STAGES.map((s) => (
               <button
@@ -362,7 +383,88 @@ export function DashboardClient({
         </div>
       )}
 
-      {/* TAB 2: COMPANY PROFILE & CATALOG */}
+      {/* TAB 2: AI MATCHED OPPORTUNITIES */}
+      {activeTab === 'matches' && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-indigo-400" />
+                Opportunities Ranked by Qualification Match
+              </h2>
+              <p className="text-xs text-slate-400 mt-1">
+                AI computes compatibility against your company profile, GDT tax patent, and core sector offerings.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {matchedOpportunities.map((tender) => {
+              const remaining = getDaysRemaining(tender.deadline)
+              return (
+                <div
+                  key={tender.id}
+                  className="glass-panel rounded-2xl p-6 border border-slate-800 hover:border-indigo-500/40 transition-all flex flex-col justify-between space-y-4"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-semibold text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2.5 py-0.5 rounded-full">
+                        {tender.sources?.name || 'Verified Source'}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold border ${tender.match.badgeColor}`}>
+                          {tender.match.score}% Match
+                        </span>
+                      </div>
+                    </div>
+
+                    <Link
+                      href={`/tenders/${tender.slug}`}
+                      className="font-bold text-white text-base hover:text-indigo-400 transition-colors line-clamp-2"
+                    >
+                      {tender.title}
+                    </Link>
+
+                    <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed">
+                      {tender.summary || tender.title}
+                    </p>
+
+                    <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800/80 space-y-1.5 text-xs">
+                      <div className="flex items-center justify-between text-slate-400">
+                        <span>Budget:</span>
+                        <span className="text-emerald-400 font-semibold">
+                          {formatCurrency(tender.estimated_value, tender.currency)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-slate-400">
+                        <span>Deadline:</span>
+                        <span className={remaining.isUrgent ? 'text-amber-300 font-semibold' : 'text-slate-300'}>
+                          {remaining.text} ({formatDate(tender.deadline)})
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
+                    <span className="text-[11px] text-slate-400">
+                      Fit: <strong className="text-white">{tender.match.tier}</strong>
+                    </span>
+                    <Link
+                      href={`/tenders/${tender.slug}`}
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-400 hover:text-indigo-300"
+                    >
+                      View AI Gap Analysis
+                      <ChevronRight className="h-3.5 w-3.5" />
+                    </Link>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* TAB 3: COMPANY PROFILE & CATALOG */}
       {activeTab === 'company' && (
         <div className="glass-panel rounded-2xl p-6 sm:p-8 border border-slate-800 max-w-3xl">
           <div className="mb-6">
@@ -462,14 +564,17 @@ export function DashboardClient({
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5">Company Overview & Core Offerings</label>
+              <label className="block text-xs font-medium text-slate-300 mb-1.5">Core Product Offerings & Keywords</label>
               <textarea
                 name="description"
                 rows={3}
-                defaultValue={initialCompany?.description || ''}
-                placeholder="Describe your company's core products, equipment inventory, and certifications..."
+                defaultValue={initialCompany?.description || 'Laptops, server hardware, networking cables, uninterruptible power supply (UPS), technical support, CCTV surveillance, road civil works, medical hospital equipment'}
+                placeholder="List your products and services separated by commas to match tender requirements..."
                 className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
               />
+              <span className="text-[10px] text-slate-500 mt-1 block">
+                The AI Match Engine uses these keywords to calculate match percentages against incoming tender line items.
+              </span>
             </div>
 
             <button
@@ -478,13 +583,13 @@ export function DashboardClient({
               className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-semibold text-white shadow-lg shadow-blue-600/30 hover:bg-blue-500 transition-all cursor-pointer"
             >
               <Save className="h-3.5 w-3.5" />
-              {isPending ? 'Saving...' : 'Save Company Profile'}
+              {isPending ? 'Saving...' : 'Save Company Profile & Catalog'}
             </button>
           </form>
         </div>
       )}
 
-      {/* TAB 3: ALERT RULES */}
+      {/* TAB 4: ALERT RULES */}
       {activeTab === 'alerts' && (
         <div className="space-y-6">
           <div className="flex items-center justify-between gap-4">

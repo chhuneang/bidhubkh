@@ -22,6 +22,8 @@ import {
   MapPin
 } from 'lucide-react'
 import { SaveTenderButton } from '@/components/tenders/SaveTenderButton'
+import { SupplierMatchCard } from '@/components/tenders/SupplierMatchCard'
+import { calculateSupplierMatch } from '@/lib/matching'
 
 // Default fallback sample tender
 const FALLBACK_TENDER = {
@@ -68,6 +70,8 @@ export default async function TenderDetailPage({
   const { slug } = await params
   let tender: any = null
   let isSaved = false
+  let user: any = null
+  let company: any = null
 
   // Fetch live from Supabase
   if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
@@ -94,16 +98,28 @@ export default async function TenderDetailPage({
         }
       }
 
-      // Check if logged in user has saved this tender
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user && data) {
-        const { data: savedRow } = await supabase
-          .from('saved_tenders')
-          .select('id')
+      // Check if logged in user & fetch company
+      const { data: authData } = await supabase.auth.getUser()
+      user = authData.user
+
+      if (user) {
+        // Fetch company
+        const { data: comp } = await supabase
+          .from('companies')
+          .select('*')
           .eq('user_id', user.id)
-          .eq('tender_id', data.id)
           .maybeSingle()
-        if (savedRow) isSaved = true
+        company = comp
+
+        if (data) {
+          const { data: savedRow } = await supabase
+            .from('saved_tenders')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('tender_id', data.id)
+            .maybeSingle()
+          if (savedRow) isSaved = true
+        }
       }
     } catch (err) {
       console.error('Failed to fetch tender:', err)
@@ -134,6 +150,7 @@ export default async function TenderDetailPage({
     : (typeof tender.requirements === 'string' ? JSON.parse(tender.requirements) : [])
 
   const documents = tender.tender_documents || []
+  const matchResult = calculateSupplierMatch(tender, company)
 
   return (
     <div className="min-h-screen flex flex-col bg-[#090d16] text-slate-100">
@@ -192,6 +209,13 @@ export default async function TenderDetailPage({
                 </div>
               </div>
             </div>
+
+            {/* AI SUPPLIER MATCH & GAP ANALYSIS CARD */}
+            <SupplierMatchCard
+              matchResult={matchResult}
+              company={company}
+              isLoggedIn={!!user}
+            />
 
             {/* AI TENDER INTELLIGENCE SUMMARY */}
             <div className="glass-panel rounded-2xl p-6 sm:p-8 border border-blue-500/30 bg-blue-950/20 relative overflow-hidden">

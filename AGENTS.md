@@ -65,16 +65,20 @@ Welcome, AI Agent! This document tracks the exact architectural decisions, compl
   - **Deterministic Rule Fallback**: Ensures 100% scraper uptime if offline.
 - Enriches every incoming tender with 2-3 sentence executive summaries, bill of materials, and mandatory compliance checklists.
 
+### Milestone 09 — AI Supplier Matching & Qualification Score
+- Built multi-factor qualification engine in [web/src/lib/matching.ts](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/web/src/lib/matching.ts) calculating match percentage (0-100%), verified company strengths, missing document gap analysis, and recommended next actions.
+- Built interactive [SupplierMatchCard.tsx](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/web/src/components/tenders/SupplierMatchCard.tsx) rendered directly on tender detail pages ([/tenders/[slug]](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/web/src/app/tenders/%5Bslug%5D/page.tsx)).
+- Enhanced **Supplier Dashboard** ([/dashboard](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/web/src/app/dashboard/page.tsx)) with a dedicated **"AI Matched Opportunities"** ranking tab and dynamic product catalog keyword manager.
+
 ---
 
 ## 📋 Recommended Next Steps for the Next AI Agent
 
-1. **AI Supplier Matching (Milestone 09)**:
-   - Match company product catalogs against extracted tender requirements to calculate qualification match percentages (e.g. "92% Match").
-2. **Monetization & Subscription Plans (Milestone 10)**:
-   - Configurable tier limits (Free, Pro, Business) for AI tender intelligence and export capabilities.
-3. **Advanced Bid / No-Bid Intelligence (Milestone 11)**:
-   - Win probability calculator, risk analysis, and automated executive bid checklists.
+1. **Telegram Alert Notification Bot & Email Dispatcher (Milestone 10)**:
+   - Automated crawler cron/worker that matches incoming tenders against user alert rules in `alerts` table.
+   - Sends Telegram bot notifications & email alerts to suppliers when matching tenders drop.
+2. **AI Bid / No-Bid Intelligence & Win Probability Calculator (Milestone 11)**:
+   - Win probability calculator, risk analysis, and automated executive bid decision matrix.
 
 ---
 
