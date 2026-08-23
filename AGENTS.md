@@ -70,15 +70,17 @@ Welcome, AI Agent! This document tracks the exact architectural decisions, compl
 - Built interactive [SupplierMatchCard.tsx](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/web/src/components/tenders/SupplierMatchCard.tsx) rendered directly on tender detail pages ([/tenders/[slug]](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/web/src/app/tenders/%5Bslug%5D/page.tsx)).
 - Enhanced **Supplier Dashboard** ([/dashboard](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/web/src/app/dashboard/page.tsx)) with a dedicated **"AI Matched Opportunities"** ranking tab and dynamic product catalog keyword manager.
 
+### Milestone 10 — Telegram & Email Alert Notification Dispatcher
+- Built Telegram Bot client in [scraper/notifications/telegram_bot.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/notifications/telegram_bot.py) with structured markdown broadcast cards.
+- Built real-time notification matcher in [scraper/notifications/dispatcher.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/notifications/dispatcher.py) wired directly to Supabase `alerts` table and scraper pipeline.
+- Added Telegram Chat ID / Channel linking support to the Supplier Dashboard alert rule manager.
+
 ---
 
 ## 📋 Recommended Next Steps for the Next AI Agent
 
-1. **Telegram Alert Notification Bot & Email Dispatcher (Milestone 10)**:
-   - Automated crawler cron/worker that matches incoming tenders against user alert rules in `alerts` table.
-   - Sends Telegram bot notifications & email alerts to suppliers when matching tenders drop.
-2. **AI Bid / No-Bid Intelligence & Win Probability Calculator (Milestone 11)**:
-   - Win probability calculator, risk analysis, and automated executive bid decision matrix.
+1. **AI Bid / No-Bid Intelligence & Win Probability Calculator (Milestone 11 - Final Milestone)**:
+   - Win probability calculator, margin risk analysis, and automated executive bid decision matrix.
 
 ---
 

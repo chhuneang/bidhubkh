@@ -632,7 +632,14 @@ export function DashboardClient({
                   )}
 
                   <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
-                    <span>Email: Daily digest</span>
+                    <div className="flex items-center gap-2">
+                      <span>Email Digest</span>
+                      {rule.telegram_chat_id && (
+                        <span className="text-[10px] bg-blue-500/10 border border-blue-500/30 text-blue-400 px-2 py-0.5 rounded-md font-medium">
+                          ✈ Telegram Linked
+                        </span>
+                      )}
+                    </div>
                     <button
                       type="button"
                       onClick={() => handleDeleteAlert(rule.id)}
@@ -649,7 +656,7 @@ export function DashboardClient({
               <Bell className="h-10 w-10 text-slate-600 mx-auto" />
               <h3 className="text-base font-semibold text-white">No alert rules active</h3>
               <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                Set up keyword and category rules to get notified when new bids match your business.
+                Set up keyword and Telegram rules to get notified when new bids match your business.
               </p>
               <button
                 type="button"
@@ -687,6 +694,21 @@ export function DashboardClient({
                       placeholder="laptop, server, network, workstation"
                       className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-300 mb-1">
+                      Telegram Chat ID / Channel (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      name="telegramChatId"
+                      placeholder="e.g. 123456789 or @mycompany_tenders"
+                      className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 font-mono"
+                    />
+                    <span className="text-[10px] text-slate-500 mt-0.5 block">
+                      Get your Telegram ID from @userinfobot to receive instant bot notifications.
+                    </span>
                   </div>
 
                   <div className="flex items-center justify-end gap-2 pt-2">

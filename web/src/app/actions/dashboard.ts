@@ -82,6 +82,7 @@ export async function createAlertRule(formData: FormData) {
 
   const name = formData.get('name') as string
   const keywordsStr = formData.get('keywords') as string
+  const telegramChatId = formData.get('telegramChatId') as string
   const keywords = keywordsStr ? keywordsStr.split(',').map((k) => k.trim()).filter(Boolean) : []
   const minValue = formData.get('minValue') ? parseFloat(formData.get('minValue') as string) : null
   const maxValue = formData.get('maxValue') ? parseFloat(formData.get('maxValue') as string) : null
@@ -92,8 +93,10 @@ export async function createAlertRule(formData: FormData) {
     keywords,
     minimum_value: minValue,
     maximum_value: maxValue,
-    frequency: 'daily',
+    frequency: 'instant',
     email_notifications: true,
+    telegram_notifications: Boolean(telegramChatId),
+    telegram_chat_id: telegramChatId || null,
     active: true
   })
 

@@ -6,6 +6,7 @@ from typing import List, Optional
 from dotenv import load_dotenv
 from scraper.sources.base import BaseSource, RawTenderData, NormalizedTenderData
 from scraper.extractors.ai_extractor import MultiProviderAIExtractor
+from scraper.notifications.dispatcher import NotificationDispatcher
 
 load_dotenv()
 
@@ -19,6 +20,7 @@ class IngestionPipeline:
         self.supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_ANON_KEY")
         self.client = None
         self.ai_extractor = MultiProviderAIExtractor()
+        self.dispatcher = NotificationDispatcher()
 
         if self.supabase_url and self.supabase_key and "your-project" not in self.supabase_url:
             try:
@@ -78,6 +80,7 @@ class IngestionPipeline:
         processed_count = 0
         duplicate_count = 0
         error_count = 0
+        ingested_tenders = []
 
         source_id = self.get_source_id(source.code)
 
@@ -149,11 +152,19 @@ class IngestionPipeline:
                         "moderation_status": "approved"
                     }
                     self.client.from_("tenders").upsert(tender_record, on_conflict="slug").execute()
+                    ingested_tenders.append(tender_record)
                 except Exception as db_err:
                     error_count += 1
                     print(f"     [DB Warning] {db_err}")
 
             processed_count += 1
+
+        # Dispatch real-time notifications to matching supplier alert rules
+        if ingested_tenders:
+            try:
+                self.dispatcher.dispatch_tender_alerts(ingested_tenders)
+            except Exception as dispatch_err:
+                print(f"[Pipeline Warning] Alert dispatch encountered an error: {dispatch_err}")
 
         summary = {
             "source_code": source.code,
