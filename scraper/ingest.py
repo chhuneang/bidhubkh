@@ -4,6 +4,7 @@ BidHubKH Data Ingestion CLI Runner
 Usage:
   python -m scraper.ingest --source world_bank_kh
   python -m scraper.ingest --source adb_kh
+  python -m scraper.ingest --source mef_gdipp
   python -m scraper.ingest --source all
 """
 
@@ -11,6 +12,7 @@ import argparse
 import sys
 from scraper.sources.world_bank import WorldBankCambodiaSource
 from scraper.sources.adb import ADBCambodiaSource
+from scraper.sources.mef import MEFSource
 from scraper.pipeline import IngestionPipeline
 
 def main():
@@ -19,7 +21,7 @@ def main():
         "--source",
         type=str,
         default="all",
-        help="Source code to run ('world_bank_kh', 'adb_kh', 'all')"
+        help="Source code to run ('world_bank_kh', 'adb_kh', 'mef_gdipp', 'all')"
     )
     args = parser.parse_args()
 
@@ -32,8 +34,11 @@ def main():
     if args.source in ["adb_kh", "all"]:
         sources.append(ADBCambodiaSource())
 
+    if args.source in ["mef_gdipp", "all"]:
+        sources.append(MEFSource())
+
     if not sources:
-        print(f"Error: Unknown source '{args.source}'. Valid options: 'world_bank_kh', 'adb_kh', 'all'")
+        print(f"Error: Unknown source '{args.source}'. Valid options: 'world_bank_kh', 'adb_kh', 'mef_gdipp', 'all'")
         sys.exit(1)
 
     print(f"\n[Ingest] Launching BidHubKH Ingestion Engine for {len(sources)} source(s)...")

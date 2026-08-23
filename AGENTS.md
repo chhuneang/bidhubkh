@@ -43,27 +43,27 @@ Welcome, AI Agent! This document tracks the exact architectural decisions, compl
 - Built abstract adapter contract in [scraper/sources/base.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/sources/base.py).
 - **Source #1 (World Bank Cambodia API)**: [scraper/sources/world_bank.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/sources/world_bank.py).
 - **Source #2 (Asian Development Bank Cambodia)**: [scraper/sources/adb.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/sources/adb.py).
+- **Source #3 (Cambodian Government MEF / GDPP)**: [scraper/sources/mef.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/sources/mef.py) — Ingests official national procurement packages across ministries (Tax/Customs GDT, Public Works MPWT, Education MoEYS, Health MoH).
 - Built [scraper/pipeline.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/pipeline.py) and [scraper/ingest.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/ingest.py). Actively tested and writing live data directly to Supabase (`raw_tenders` and `tenders`).
 
 ### Milestone 08 — AI Tender Intelligence & Multi-Provider Engine
 - Built unified multi-provider AI extraction engine in [scraper/extractors/ai_extractor.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/extractors/ai_extractor.py).
 - Supported AI providers:
-  - **OpenRouter** ([openrouter_extractor.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/extractors/openrouter_extractor.py)): Supports free models (`google/gemini-2.0-flash-exp:free`, `meta-llama/llama-3.3-70b-instruct:free`, `deepseek/deepseek-r1:free`, `openrouter/auto`, and custom alpha models).
-  - **Google Gemini Flash** ([gemini_extractor.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/extractors/gemini_extractor.py)): Direct high-speed API via `google-genai`.
+  - **OpenRouter** ([openrouter_extractor.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/extractors/openrouter_extractor.py)): Active with `stealth/ox-alpha` free model and failovers.
+  - **Google Gemini Flash** ([gemini_extractor.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/extractors/gemini_extractor.py)): Direct API backup.
   - **Deterministic Rule Fallback**: Ensures 100% scraper uptime if offline.
-- Extracts structured outputs: 2-3 sentence executive summaries, key buyer intent, product specifications, and mandatory supplier qualification checklists.
-- Wired directly into the ingestion pipeline to automatically enrich all incoming notices in Supabase.
+- Enriches every incoming tender with 2-3 sentence executive summaries, bill of materials, and mandatory compliance checklists.
 
 ---
 
 ## 📋 Recommended Next Steps for the Next AI Agent
 
-1. **Source #3: Cambodian Government Portal Ingestion**:
-   - Build adapter for General Department of Public Procurement (MEF / GDPP) or FMIS HTML scraping in [scraper/sources/mef.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/sources/mef.py).
-2. **User Authentication & Supplier Company Profiles (Milestones 07 & 09)**:
+1. **User Authentication & Supplier Company Profiles (Milestones 07 & 09)**:
    - Wire Supabase Auth (Email/Password & Google OAuth) to `/login` and `/dashboard` for supplier profiles, bookmarked tenders, and email/Telegram alert subscriptions.
-3. **AI Supplier Matching (Milestone 09)**:
+2. **AI Supplier Matching (Milestone 09)**:
    - Match company product catalogs against extracted tender requirements to calculate qualification match percentages (e.g. "92% Match").
+3. **Source #4: UNGM & NGO Procurement Portals**:
+   - Add UN Global Marketplace (UNGM Cambodia) and NGO procurement adapters.
 
 ---
 
