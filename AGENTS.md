@@ -27,9 +27,9 @@ Welcome, AI Agent! This document tracks the exact architectural decisions, compl
 - Initialized Next.js 15 App Router in `web/` with responsive design system and glassmorphic UI tokens.
 - **Routes Implemented**:
   - `/` ([web/src/app/page.tsx](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/web/src/app/page.tsx)) — Hero search, sector categories, live metric badges, and value proposition cards.
-  - `/tenders` ([web/src/app/tenders/page.tsx](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/web/src/app/tenders/page.tsx)) — Live search and category filters over Supabase.
-  - `/tenders/[slug]` ([web/src/app/tenders/[slug]/page.tsx](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/web/src/app/tenders/%5Bslug%5D/page.tsx)) — Structured AI summary, products scope, eligibility criteria, and official links.
-  - `/admin` ([web/src/app/admin/page.tsx](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/web/src/app/admin/page.tsx)) — Live source health monitor and tender moderation queue.
+  - `/tenders` ([web/src/app/tenders/page.tsx](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/web/src/app/tenders/page.tsx)) — Live search and category filters querying Supabase PostgreSQL.
+  - `/tenders/[slug]` ([web/src/app/tenders/[slug]/page.tsx](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/web/src/app/tenders/%5Bslug%5D/page.tsx)) — Dynamically renders live tender details, structured AI summary, scope of supply, eligibility checklist, and working official external links to World Bank / ADB source portals.
+  - `/admin` ([web/src/app/admin/page.tsx](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/web/src/app/admin/page.tsx)) — Live source health monitor and tender moderation queue connected to PostgreSQL.
 - Verified with `npm run build` (0 TypeScript / lint errors).
 
 ### Milestone 02 — Database Schema & Supabase Integration
