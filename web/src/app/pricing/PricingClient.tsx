@@ -92,14 +92,14 @@ export function PricingClient({ plans, currentPlanSlug, isLoggedIn }: PricingCli
 
         {/* Currency Switcher */}
         <div className="pt-4 flex items-center justify-center">
-          <div className="inline-flex items-center p-1 rounded-2xl bg-white border border-slate-200 shadow-xs">
+          <div className="inline-flex items-center p-1 rounded-2xl bg-slate-100/90 border border-slate-200/90 shadow-inner gap-1">
             <button
               type="button"
               onClick={() => setCurrency('USD')}
-              className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 currency === 'USD'
-                  ? 'bg-blue-600 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-white text-blue-600 shadow-xs border border-blue-200 ring-2 ring-blue-500/10 scale-[1.02]'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/60 border border-transparent'
               }`}
             >
               USD ($)
@@ -107,14 +107,20 @@ export function PricingClient({ plans, currentPlanSlug, isLoggedIn }: PricingCli
             <button
               type="button"
               onClick={() => setCurrency('KHR')}
-              className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                 currency === 'KHR'
-                  ? 'bg-rose-600 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-rose-600 text-white shadow-xs border border-rose-600 ring-2 ring-rose-500/10 scale-[1.02]'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/60 border border-transparent'
               }`}
             >
               <span>KHR (៛)</span>
-              <span className="text-[9px] bg-white/30 px-1.5 py-0.2 rounded-md font-bold text-white">
+              <span
+                className={`text-[10px] px-1.5 py-0.5 rounded-md font-extrabold ${
+                  currency === 'KHR'
+                    ? 'bg-white/25 text-white'
+                    : 'bg-rose-100 text-rose-700 border border-rose-200'
+                }`}
+              >
                 Bakong
               </span>
             </button>
