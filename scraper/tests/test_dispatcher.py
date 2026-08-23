@@ -203,6 +203,18 @@ class TestDispatchTenderAlerts:
         assert dispatcher.dispatch_tender_alerts([tender()]) == 1
         assert dispatcher.telegram_bot.is_configured is False
 
+    def test_tender_without_title_does_not_crash_dispatch(self, dispatcher):
+        # Regression: the match log line sliced tender["title"][:40], which
+        # raised TypeError for a matched tender with title None or missing.
+        dispatcher.get_active_alert_rules = lambda: [rule(name="r1")]
+        assert dispatcher.dispatch_tender_alerts([tender(title=None)]) == 1
+
+    def test_tender_with_missing_title_key_does_not_crash_dispatch(self, dispatcher):
+        dispatcher.get_active_alert_rules = lambda: [rule(name="r1")]
+        t = tender()
+        del t["title"]
+        assert dispatcher.dispatch_tender_alerts([t]) == 1
+
 
 class TestSupabaseClientGuard:
     def test_get_active_alert_rules_without_client_returns_empty(self, dispatcher):

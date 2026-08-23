@@ -25,7 +25,7 @@ describe('computeBidDecision — capability fit component', () => {
   const tender = { title: 'T' }
 
   it.each([
-    ['no credentials', undefined as const, 65],
+    ['no credentials', undefined, 65],
     ['tax_id only', { name: 'C', tax_id: 'T1' }, 80],
     ['registration only', { name: 'C', registration_number: 'R1' }, 75],
     ['both credentials (cap 95 never binds)', { name: 'C', tax_id: 'T1', registration_number: 'R1' }, 90],
@@ -93,7 +93,7 @@ describe('computeBidDecision — compliance ease component', () => {
   const t = (requirements: string[]) => ({ title: 'T', requirements })
 
   it.each([
-    ['no requirements, no credentials', t([]), undefined as const, 70],
+    ['no requirements, no credentials', t([]), undefined, 70],
     ['exactly 5 requirements (penalty needs > 5)', t(['r1', 'r2', 'r3', 'r4', 'r5']), undefined, 70],
     ['6 requirements trigger -15', t(['r1', 'r2', 'r3', 'r4', 'r5', 'r6']), undefined, 55],
     ['both credentials add +20 even with heavy requirements', t(['r1', 'r2', 'r3', 'r4', 'r5', 'r6']), { name: 'C', tax_id: 'T', registration_number: 'R' }, 75],

@@ -3,11 +3,11 @@ BidHubKH — Notification Dispatcher Engine
 Matches newly ingested tenders against active user alert rules and broadcasts via Telegram / Email.
 """
 
-import os
-import sys
 import logging
+import os
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
+
 from dotenv import load_dotenv
 
 # Ensure environment variables are loaded
@@ -15,8 +15,9 @@ env_path = Path(__file__).resolve().parent.parent / ".env"
 if env_path.exists():
     load_dotenv(dotenv_path=env_path)
 
+from supabase import Client, create_client
+
 from scraper.notifications.telegram_bot import TelegramAlertBot
-from supabase import create_client, Client
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
@@ -96,7 +97,8 @@ class NotificationDispatcher:
         for tender in tenders:
             for rule in rules:
                 if self.matches_rule(tender, rule):
-                    logger.info(f"⚡ Match found! Tender '{tender.get('title')[:40]}...' matches Rule '{rule.get('name')}'")
+                    title = tender.get("title") or "Untitled tender"
+                    logger.info(f"⚡ Match found! Tender '{title[:40]}...' matches Rule '{rule.get('name')}'")
 
                     # Dispatch Telegram notification if configured
                     telegram_chat_id = rule.get("telegram_chat_id")

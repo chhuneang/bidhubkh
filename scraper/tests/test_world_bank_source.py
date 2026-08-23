@@ -20,7 +20,7 @@ CAMBODIA_FIXTURE = "world_bank_kh/procnotices_cambodia.json"
 
 def fetch_raw_equivalent(body: dict) -> list[RawTenderData]:
     """Replicates the transformation loop of WorldBankCambodiaSource.fetch_raw
-    (scraper/sources/world_bank.py lines 42-66) against a captured JSON body."""
+    against a captured JSON body, including the Cambodia country post-filter."""
     raw_items = []
     notices = body.get("procnotices", [])
 
@@ -32,6 +32,9 @@ def fetch_raw_equivalent(body: dict) -> list[RawTenderData]:
 
     for notice in notice_list:
         if not isinstance(notice, dict):
+            continue
+        country = notice.get("project_ctry_name")
+        if country is not None and country != "Cambodia":
             continue
         external_id = notice.get("id") or notice.get("notice_id") or str(len(raw_items) + 1)
         title = notice.get("notice_title") or notice.get("project_name") or "World Bank Tender Notice"
@@ -58,9 +61,21 @@ def build_all():
 
 class TestFetchRawEquivalence:
     def test_every_captured_notice_becomes_a_raw_item(self):
+        # 4 captured; 1 ("East Asia and Pacific" regional notice) is dropped
+        # by the country post-filter, leaving the 3 Cambodia notices.
         body = load_json(CAMBODIA_FIXTURE)
         items = build_all()
-        assert len(items) == len(body["procnotices"]) == 4
+        assert len(body["procnotices"]) == 4
+        assert len(items) == 3
+
+    def test_country_post_filter_drops_non_cambodia_keeps_missing(self):
+        polluted = {"procnotices": [
+            {"id": "X1", "project_ctry_name": "Guinea", "project_name": "Guinea notice"},
+            {"id": "X2", "project_ctry_name": "Cambodia", "project_name": "KH notice"},
+            {"id": "X3", "project_name": "no country field"},
+        ]}
+        ids = [i.external_id for i in fetch_raw_equivalent(polluted)]
+        assert ids == ["X2", "X3"]
 
     def test_title_falls_back_to_project_name(self):
         # Real capture has NO notice_title on any record; the parser must use project_name.
@@ -70,7 +85,7 @@ class TestFetchRawEquivalence:
 
     def test_external_id_comes_from_notice_id_and_is_stable(self):
         ids = [item.external_id for item in build_all()]
-        assert ids == ["OP00462995", "OP00463743", "OP00457919", "OP00463715"]
+        assert ids == ["OP00462995", "OP00463743", "OP00463715"]
 
     def test_source_url_falls_back_when_notice_has_no_url_field(self):
         # None of the captured Cambodia records carry a top-level "url" key.
@@ -83,7 +98,7 @@ class TestFetchRawEquivalence:
         # The adapter accepts {"procnotices": {key: notice, ...}} as well as a list.
         body = load_json(CAMBODIA_FIXTURE)
         wrapped = {"procnotices": {n["id"]: n for n in body["procnotices"]}}
-        assert len(fetch_raw_equivalent(wrapped)) == 4
+        assert len(fetch_raw_equivalent(wrapped)) == 3
 
     def test_non_dict_entries_are_skipped(self):
         body = load_json(CAMBODIA_FIXTURE)
@@ -100,15 +115,18 @@ class TestParseAndNormalize:
     def test_titles_are_never_empty(self):
         assert all(n.title.strip() for n in self.normalized)
 
-    def test_published_at_parsed_from_submission_date_fallback(self):
-        # payload has no "proc_notice_date"; the parser falls back to submission_date.
+    def test_published_at_parsed_from_noticedate_dd_mon_yyyy(self):
+        # payload carries noticedate as "17-Aug-2026" (dd-Mon-yyyy); before the
+        # dedicated format branch this silently fell back to utcnow().
         first = self.normalized[0]
         assert isinstance(first.published_at, datetime)
         assert first.published_at.isoformat().startswith("2026-08-17T00:00:00")
 
     def test_deadline_parsed_from_iso_z_submission_deadline(self):
+        # One of the two captured deadline-bearing notices was the regional
+        # ("East Asia and Pacific") record dropped by the country filter.
         with_deadline = [n for n in self.normalized if n.deadline is not None]
-        assert len(with_deadline) == 2
+        assert len(with_deadline) == 1
         assert with_deadline[0].deadline.isoformat().startswith("2026-09-01T00:00:00")
 
     def test_missing_deadline_stays_none(self):
@@ -153,12 +171,10 @@ class TestParseAndNormalize:
         by_id = {n.external_id: n.category_slug for n in self.normalized}
         assert by_id["OP00463743"] == "consulting-services"
 
-    def test_naive_substring_keyword_matches_transition_as_it_telecom(self):
+    def test_naive_substring_keyword_matches_sanitation_as_it_telecom(self):
         # Documents current behaviour: keyword checks are naive substring matches,
-        # so words like "transition"/"sanitation" contain "it" and map these
-        # records to it-telecom even though they are energy/WASH projects.
+        # so "sanitation" contains "it" and maps this WASH project to it-telecom.
         by_id = {n.external_id: n.category_slug for n in self.normalized}
-        assert by_id["OP00457919"] == "it-telecom"  # "...Energy Transition Program"
         assert by_id["OP00462995"] == "it-telecom"  # "Water Supply and Sanitation..."
 
     def test_synthetic_title_category_branches(self):
@@ -170,8 +186,11 @@ class TestParseAndNormalize:
             return self.source.parse_and_normalize(raw).category_slug
 
         assert category_for("Supply of 40 laptops and servers for schools") == "it-telecom"
-        # NOTE: titles must avoid words containing "it" ("rehabilitation", "sanitation")
-        # because the naive substring match classifies them as it-telecom first.
+        # NOTE: titles must avoid words containing "it" ("rehabilitation",
+        # "sanitation", "transition") because the naive substring match
+        # classifies them as it-telecom first — e.g. an "...Energy Transition
+        # Program" notice is classified it-telecom (see the sanitation test).
+        assert category_for("Energy transition programme support") == "it-telecom"
         assert category_for("Road paving and bridge works package two") == "construction-civil"
         # Even "hospital" contains "it" — pick medical wording without any IT keyword.
         assert category_for("Pharmaceutical and medical supplies for rural clinics") == (

@@ -22,14 +22,18 @@ class WorldBankCambodiaSource(BaseSource):
         )
 
     def fetch_raw(self) -> List[RawTenderData]:
+        # NOTE: the v2 procnotices API silently ignores `countrycode_exact`
+        # (verified live 2026-08-23: it returned Pakistan/Cameroon/Guinea
+        # notices). `qterm=Cambodia` is honored (~49/50), and the loop below
+        # post-filters on `project_ctry_name` to drop the remaining strays.
         params = {
             "format": "json",
-            "countrycode_exact": "KH",
+            "qterm": "Cambodia",
             "rows": 50,
             "os": 0,
             "sort": "proc_notice_date desc"
         }
-        
+
         headers = {
             "User-Agent": "BidHubKH-TenderIntelligence/1.0 (info@bidhubkh.com)"
         }
@@ -44,7 +48,7 @@ class WorldBankCambodiaSource(BaseSource):
 
         raw_items = []
         notices = data.get("procnotices", [])
-        
+
         notice_list = []
         if isinstance(notices, dict):
             notice_list = list(notices.values())
@@ -54,7 +58,11 @@ class WorldBankCambodiaSource(BaseSource):
         for notice in notice_list:
             if not isinstance(notice, dict):
                 continue
-            
+
+            country = notice.get("project_ctry_name")
+            if country is not None and country != "Cambodia":
+                continue
+
             external_id = notice.get("id") or notice.get("notice_id") or str(len(raw_items) + 1)
             title = notice.get("notice_title") or notice.get("project_name") or "World Bank Tender Notice"
             doc_url = notice.get("url") or f"https://projects.worldbank.org/en/projects-operations/procurement-detail/{external_id}"
@@ -73,14 +81,23 @@ class WorldBankCambodiaSource(BaseSource):
     def parse_and_normalize(self, raw: RawTenderData) -> NormalizedTenderData:
         payload = raw.raw_payload
         
-        # Parse Dates
-        pub_str = payload.get("proc_notice_date") or payload.get("submission_date")
+        # Parse Dates — the v2 procnotices payload carries `noticedate`
+        # (verified live), formatted as "17-Aug-2026"; the other two names
+        # are kept for safety and arrive ISO-8601 when present.
+        pub_str = (
+            payload.get("proc_notice_date")
+            or payload.get("noticedate")
+            or payload.get("submission_date")
+        )
         published_at = datetime.utcnow()
         if pub_str:
             try:
                 published_at = datetime.fromisoformat(pub_str.replace("Z", "+00:00"))
             except Exception:
-                pass
+                try:
+                    published_at = datetime.strptime(pub_str, "%d-%b-%Y")
+                except Exception:
+                    pass
 
         deadline_str = payload.get("submission_deadline_date") or payload.get("bid_submission_deadline")
         deadline = None
