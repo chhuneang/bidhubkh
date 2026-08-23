@@ -6,7 +6,6 @@ import {
   ShieldCheck,
   AlertTriangle,
   CheckCircle2,
-  Printer,
   Compass,
   FileCheck,
   Zap,
@@ -21,37 +20,21 @@ interface BidDecisionMatrixCardProps {
 }
 
 export function BidDecisionMatrixCard({ decisionResult, tenderTitle }: BidDecisionMatrixCardProps) {
-  const handlePrint = () => {
-    window.print()
-  }
-
   return (
     <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-            <Zap className="h-5 w-5" />
-          </div>
-          <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-blue-600 block">
-              AI Strategic Intelligence
-            </span>
-            <h2 className="text-lg font-bold text-slate-900">
-              Bid / No-Bid Decision Matrix
-            </h2>
-          </div>
+      <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+          <Zap className="h-5 w-5" />
         </div>
-
-        {/* Action Button */}
-        <button
-          type="button"
-          onClick={handlePrint}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-all cursor-pointer shadow-xs shrink-0"
-        >
-          <Printer className="h-3.5 w-3.5 text-slate-500" />
-          Export Decision Memo
-        </button>
+        <div>
+          <span className="text-xs font-bold uppercase tracking-wider text-blue-600 block">
+            AI Strategic Intelligence
+          </span>
+          <h2 className="text-lg font-bold text-slate-900">
+            Bid / No-Bid Decision Matrix
+          </h2>
+        </div>
       </div>
 
       {/* Main Score & Decision Banner */}

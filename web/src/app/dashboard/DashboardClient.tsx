@@ -37,6 +37,7 @@ import {
   Trophy,
   ArrowRight
 } from 'lucide-react'
+import { StageDropdown } from '@/components/dashboard/StageDropdown'
 
 interface DashboardClientProps {
   user: any
@@ -431,25 +432,17 @@ export function DashboardClient({
 
                     {/* Bottom Status Selector & Actions */}
                     <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-1.5 flex-1">
-                        <select
-                          value={item.status}
-                          onChange={(e) => handleStatusChange(item.id, e.target.value)}
-                          className="text-xs bg-white border border-slate-200 text-slate-800 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-blue-600 font-bold shadow-xs w-full cursor-pointer hover:border-slate-300"
-                        >
-                          <option value="interested">Interested</option>
-                          <option value="reviewing">Reviewing Specs</option>
-                          <option value="preparing_bid">Preparing Bid</option>
-                          <option value="submitted">Submitted</option>
-                          <option value="won">Won 🎉</option>
-                          <option value="lost">Lost</option>
-                        </select>
+                      <div className="flex-1">
+                        <StageDropdown
+                          currentStatus={item.status}
+                          onChange={(newStatus) => handleStatusChange(item.id, newStatus)}
+                        />
                       </div>
 
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 shrink-0">
                         <Link
                           href={`/tenders/${tender?.slug}`}
-                          className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                          className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-xl transition-colors"
                           title="View Tender Intelligence"
                         >
                           <ExternalLink className="h-4 w-4" />
@@ -457,7 +450,7 @@ export function DashboardClient({
                         <button
                           type="button"
                           onClick={() => handleDeleteBid(item.id)}
-                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                          className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
                           title="Remove from pipeline"
                         >
                           <Trash2 className="h-4 w-4" />
