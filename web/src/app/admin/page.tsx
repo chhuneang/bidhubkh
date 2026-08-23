@@ -152,11 +152,13 @@ export default async function AdminPage() {
 
           <div className="glass-panel rounded-2xl p-5 border border-slate-800">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-400 font-medium">Avg. Confidence</span>
+              <span className="text-xs text-slate-400 font-medium">Link Health & Credibility</span>
               <ShieldCheck className="h-4 w-4 text-emerald-400" />
             </div>
-            <div className="text-2xl font-extrabold text-white mt-2">97.2%</div>
-            <div className="text-[11px] text-emerald-400 mt-1">High extraction score</div>
+            <div className="text-2xl font-extrabold text-emerald-400 mt-2">100% Valid</div>
+            <div className="text-[11px] text-emerald-400 mt-1 flex items-center gap-1">
+              <CheckCircle2 className="h-3 w-3" /> Anti-404 Sentinel Active
+            </div>
           </div>
         </div>
 

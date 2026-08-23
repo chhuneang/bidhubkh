@@ -7,13 +7,14 @@ from dotenv import load_dotenv
 from scraper.sources.base import BaseSource, RawTenderData, NormalizedTenderData
 from scraper.extractors.ai_extractor import MultiProviderAIExtractor
 from scraper.notifications.dispatcher import NotificationDispatcher
+from scraper.link_sentinel import LinkSentinel
 
 load_dotenv()
 
 class IngestionPipeline:
     """
     Executes extraction, AI intelligence summarization, deduplication, 
-    and database ingestion workflow into Supabase PostgreSQL.
+    URL link health validation, and database ingestion workflow into Supabase PostgreSQL.
     """
     def __init__(self):
         self.supabase_url = os.getenv("SUPABASE_URL")
@@ -21,6 +22,7 @@ class IngestionPipeline:
         self.client = None
         self.ai_extractor = MultiProviderAIExtractor()
         self.dispatcher = NotificationDispatcher()
+        self.link_sentinel = LinkSentinel()
 
         if self.supabase_url and self.supabase_key and "your-project" not in self.supabase_url:
             try:
@@ -122,7 +124,9 @@ class IngestionPipeline:
                     raw_res = self.client.from_("raw_tenders").upsert(raw_record, on_conflict="source_id, external_id").execute()
                     raw_tender_id = raw_res.data[0]["id"] if raw_res.data else None
 
-                    # 2. Upsert tenders
+                    # 2. Validate external URL health before saving
+                    _, validated_url, _ = self.link_sentinel.validate_url(normalized.original_url, source.code)
+
                     cat_id = self.get_category_id(normalized.category_slug)
                     org_id = self.get_org_id(normalized.organization_slug)
 
@@ -146,7 +150,7 @@ class IngestionPipeline:
                         "eligibility": normalized.eligibility,
                         "products_services": normalized.products_services,
                         "requirements": normalized.requirements,
-                        "original_url": normalized.original_url,
+                        "original_url": validated_url,
                         "confidence_score": normalized.confidence_score,
                         "status": "published",
                         "moderation_status": "approved"

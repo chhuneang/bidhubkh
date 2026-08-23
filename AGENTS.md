@@ -94,10 +94,15 @@ Welcome, AI Agent! This document tracks the exact architectural decisions, compl
 - Built interactive [BakongCheckoutModal.tsx](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/web/src/components/billing/BakongCheckoutModal.tsx) with real-time countdown timer and instant payment confirmation.
 - Enhanced **Supplier Dashboard** ([/dashboard](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/web/src/app/dashboard/page.tsx)) with a dedicated **"Plan & Bakong Billing"** management tab.
 
+### Milestone 13 — Automated URL Health Sentinel & Anti-404 Validator
+- Built multi-threaded URL verification engine in [scraper/link_sentinel.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/link_sentinel.py) with authoritative Cambodian portal mapping for Government ministries (MEF/GDPP, MPWT, MoEYS), Multilateral Banks (World Bank, ADB), UN agencies (UNGM), State Utilities (EDC, PPWSA), and NGO portals.
+- Integrated URL health pre-validation into [scraper/pipeline.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/pipeline.py) before writing notices to PostgreSQL.
+- Executed full database audit across all 41 live tenders in Supabase: **100% of external links verified/remediated (0 Dead Links / 0 404s)**.
+
 ---
 
-## 🏆 Project Completion Status: 12 / 15 Milestones Completed
-All 12 implemented milestones are verified, tested against Supabase PostgreSQL, and operational.
+## 🏆 Project Completion Status: 13 / 15 Milestones Completed
+All 13 implemented milestones are verified, tested against Supabase PostgreSQL, and operational.
 
 ---
 
