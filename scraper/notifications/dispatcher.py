@@ -111,7 +111,7 @@ class NotificationDispatcher:
         logger.info(f"✅ Notification dispatch complete. {dispatched_count} alert notifications processed.")
         return dispatched_count
 
-def run_test_dispatch():
+def run_test_dispatch(test_chat_id: Optional[str] = None):
     """Test function for verifying alert dispatch."""
     dispatcher = NotificationDispatcher()
     sample_tender = {
@@ -126,8 +126,24 @@ def run_test_dispatch():
         "products_services": ["Laptops", "Docking Stations", "Workstations"]
     }
 
-    logger.info("Running test notification dispatch...")
-    dispatcher.dispatch_tender_alerts([sample_tender])
+    if test_chat_id:
+        logger.info(f"🚀 Sending direct test tender alert to Telegram Chat ID: {test_chat_id}")
+        if dispatcher.telegram_bot.is_configured:
+            success = dispatcher.telegram_bot.send_tender_alert(chat_id=test_chat_id, tender=sample_tender)
+            if success:
+                logger.info("🎉 SUCCESS! Check your Telegram app for the tender card.")
+            else:
+                logger.error("❌ Failed to send message. Make sure you clicked START on your bot in Telegram first!")
+        else:
+            logger.warning("Telegram Bot Token is not configured in scraper/.env")
+    else:
+        logger.info("Running database alert rules dispatch...")
+        dispatcher.dispatch_tender_alerts([sample_tender])
 
 if __name__ == "__main__":
-    run_test_dispatch()
+    import argparse
+    parser = argparse.ArgumentParser(description="BidHubKH Telegram Alert Dispatcher")
+    parser.add_argument("--chat-id", type=str, help="Send a direct test alert to this Telegram Chat ID")
+    args = parser.parse_args()
+
+    run_test_dispatch(test_chat_id=args.chat_id)
