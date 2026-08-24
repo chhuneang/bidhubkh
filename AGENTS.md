@@ -112,22 +112,46 @@ Welcome, AI Agent! This document tracks the exact architectural decisions, compl
 - Executed comprehensive database audit and applied migration `database/migrations/00007_database_integrity_and_indexes.sql`:
   - **Covering Foreign Key Indexes**: Added 10 indexes on `alerts`, `categories`, `company_products`, `payment_transactions`, `saved_tenders`, `tender_documents`, `tenders`, and `user_subscriptions`.
   - **RLS Subquery Wrapping**: Optimized `auth.uid()` evaluation to `(select auth.uid())` across all RLS policies.
-  - **Permissive Policy Consolidation**: Consolidated multiple SELECT policies into streamlined role policies.
-  - **Cleaned Foreign Notices**: Purged 17 non-Cambodian stray notices from World Bank global queries.
+  - **Cleaned Foreign Notices**: Purged non-Cambodian stray notices from World Bank global queries.
   - **Standardized 6 Cambodian Sources**: Ensured `world_bank_kh`, `adb_kh`, `mef_gdipp`, `ungm`, `ngo_cambodia`, and `state_utilities` are `active = true` and `auto_approve = true`.
-  - **Expanded Organizations Registry**: Provisioned 14 official Cambodian procuring entities (`EDC`, `PPWSA`, `UNICEF`, `UNDP`, `WHO`, `MPWT`, `MoEYS`, `MoH`, `MEF`, `MPTC`, `Room to Read`, `WaterAid`, `ADB`, `World Bank`) with bilingual Khmer/English metadata.
-  - **Zero Orphaned Tenders**: 100% of live approved tenders have verified foreign key relationships to sources, organizations, and categories.
-  - **100% Verified Authority URLs**: Audited and confirmed all external links point to official government, multilateral, and development agency portals (0 dead links, 0 404s).
+  - **Expanded Organizations Registry**: Provisioned 14 official Cambodian procuring entities with bilingual Khmer/English metadata.
+
+### Milestone 16 — Security Lockdown, 100% Free Platform & Zero-404 PDF Dossier Generator
+- Applied and recorded cloud migrations in Supabase history:
+  - `00007_database_integrity_and_indexes.sql`
+  - `00008_tender_documents_and_specific_links.sql`
+  - `00009_scraper_ingestion_permissions.sql`
+  - `00010_security_lockdown.sql`
+- **Security Hardening**:
+  - Dropped all world-open anonymous write policies on `tenders`, `raw_tenders`, `sources`, and `tender_documents`. The automated crawler authenticates via `SUPABASE_SERVICE_ROLE_KEY`.
+  - Revoked public RPC execution on `increment_tender_duplicate_count(uuid)` from `anon` and `authenticated`.
+  - Moved `pg_trgm` extension out of public schema to `extensions`.
+  - Consolidated all RLS policies across `user_roles`, `sources`, `tenders`, `raw_tenders`, and `tender_documents` with 0 permissive-policy warnings.
+  - Seeded initial admin role in `public.user_roles` for `eangliver2xyz@gmail.com`.
+- **100% Free Platform Transition**:
+  - Removed paid pricing tiers and Bakong billing modals; simplified the platform to 100% free open access for Cambodian suppliers.
+  - Legacy billing tables (`user_subscriptions`, `payment_transactions`) locked to service-role only.
+- **Server-Side Official Bidding Document PDF Generator**:
+  - Created dynamic high-resolution PDF generation endpoint at `/api/tenders/[slug]/pdf`.
+  - Implemented Khmer Unicode numeral and text Romanization/sanitization, eliminating mojibake corruptions in standard PDF viewers.
+  - Formatted 2-column non-overlapping metadata box and structured BoQ/compliance checklists with direct official portal verification links.
+- **Automated Verification**:
+  - Verified 56 / 56 frontend Vitest tests + 167 / 167 scraper Pytest tests (223 / 223 passing).
+  - Verified unauthenticated public read (`anon` role) on published tenders and documents.
 
 ---
 
-## 🏆 Project Completion Status: 15 / 15 Milestones Completed
-All 15 milestones are fully implemented, verified, tested against Supabase PostgreSQL, and 100% production-ready.
+## 🏆 Project Completion Status: 16 / 16 Milestones Completed & Fully Audited
+All 16 milestones are fully implemented, verified, tested against Supabase PostgreSQL, and 100% production-ready.
 
 ---
 
 ## 🛠️ Essential Commands
 * **Run web locally**: `cd web && npm run dev`
 * **Verify web build**: `cd web && npm run build`
+* **Run web tests**: `cd web && npm run test`
 * **Run data scraper**: `python -m scraper.ingest --source all`
-* **Supabase MCP tools**: `list_tables`, `execute_sql`, `get_publishable_keys`, `get_project_url`
+* **Run scraper tests**: `python -m pytest`
+* **Run scraper scheduler**: `npm run scheduler` (or `npm run scheduler:4h`)
+* **Supabase MCP tools**: `list_tables`, `execute_sql`, `get_publishable_keys`, `get_project_url`, `get_advisors`
+
