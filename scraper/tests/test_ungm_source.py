@@ -108,12 +108,12 @@ class TestParseAndNormalize:
     def test_category_energy_branch(self):
         n = self.source.parse_and_normalize(
             self._synthetic(title="Solar mini-grid supply and installation"))
-        assert n.category_slug == "energy-renewables"
+        assert n.category_slug == "electrical-energy"
 
     def test_category_health_branch(self):
         n = self.source.parse_and_normalize(
             self._synthetic(title="Nutrition kits and medical scales LTA"))
-        assert n.category_slug == "health-medical"
+        assert n.category_slug == "medical-healthcare"
 
     def test_category_it_branch_and_default(self):
         it = self.source.parse_and_normalize(

@@ -20,21 +20,24 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 logger = logging.getLogger("LinkSentinel")
 
 # Official Cambodian & International Procurement Authority Registry
-AUTHORITY_PORTAL_REGISTRY: Dict[str, Dict[str, str]] = {
+AUTHORITY_PORTAL_REGISTRY: Dict[str, Dict[str, Any]] = {
     "world_bank_kh": {
         "name": "The World Bank Cambodia Projects & Procurement Portal",
-        "fallback_url": "https://projects.worldbank.org/en/projects-operations/procurement?countrycode_exact=KH",
+        "fallback_url": "https://projects.worldbank.org/en/projects-operations/procurement-notices?countrycode_exact=KH",
         "allowed_domains": ["worldbank.org", "projects.worldbank.org", "documents.worldbank.org"]
     },
     "adb_kh": {
         "name": "Asian Development Bank (ADB) Cambodia Procurement",
-        "fallback_url": "https://www.adb.org/countries/cambodia/main",
+        "fallback_url": "https://www.adb.org/projects/tenders/country/cam",
         "allowed_domains": ["adb.org", "www.adb.org"]
     },
     "mef_gdipp": {
-        "name": "Royal Government of Cambodia Public Procurement Portal",
-        "fallback_url": "https://www.mpwt.gov.kh/en/documents",
-        "allowed_domains": ["mpwt.gov.kh", "www.mpwt.gov.kh", "pressocm.gov.kh"]
+        "name": "Royal Government of Cambodia Public Procurement Portal (GDPP / MEF)",
+        "fallback_url": "https://gdpp.mef.gov.kh",
+        "allowed_domains": [
+            "mef.gov.kh", "gdpp.mef.gov.kh", "mpwt.gov.kh", "www.mpwt.gov.kh",
+            "moeys.gov.kh", "www.moeys.gov.kh", "moh.gov.kh", "mptc.gov.kh"
+        ]
     },
     "ungm": {
         "name": "UN Global Marketplace (UNGM) Cambodia",
@@ -48,7 +51,7 @@ AUTHORITY_PORTAL_REGISTRY: Dict[str, Dict[str, str]] = {
     },
     "state_utilities": {
         "name": "Electricité du Cambodge (EDC) & PPWSA",
-        "fallback_url": "https://www.edc.com.kh",
+        "fallback_url": "https://www.edc.com.kh/procurement_page/procurement",
         "allowed_domains": ["edc.com.kh", "www.edc.com.kh", "ppwsa.com.kh", "www.ppwsa.com.kh"]
     }
 }

@@ -99,7 +99,7 @@ class MEFSource(BaseSource):
             slug=slug,
             summary=raw.description,
             description=raw.description,
-            organization_slug=payload.get("org_slug", "mef-cambodia"),
+            organization_slug=payload.get("org_slug", "mef"),
             organization_name=payload.get("org", "Ministry of Economy and Finance (MEF)"),
             category_slug=payload.get("category", "consulting-services"),
             location=payload.get("location", "Cambodia"),

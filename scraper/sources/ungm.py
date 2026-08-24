@@ -104,13 +104,26 @@ class UNGMCambodiaSource(BaseSource):
         # Sector mapping
         title_lower = title.lower()
         if any(k in title_lower for k in ["solar", "renewable", "energy", "grid"]):
-            cat_slug = "energy-renewables"
-        elif any(k in title_lower for k in ["nutrition", "medical", "health", "lims", "lab"]):
-            cat_slug = "health-medical"
+            cat_slug = "electrical-energy"
+        elif any(k in title_lower for k in ["nutrition", "medical", "health", "lims", "lab", "scale"]):
+            cat_slug = "medical-healthcare"
         elif any(k in title_lower for k in ["software", "digital", "system", "it"]):
             cat_slug = "it-telecom"
         else:
             cat_slug = "consulting-services"
+
+        # Organization mapping
+        org_slug = "undp-cambodia"
+        org_name = "United Nations Agencies in Cambodia"
+        if "unicef" in title_lower or "unicef" in external_id.lower():
+            org_slug = "unicef-cambodia"
+            org_name = "UNICEF Cambodia"
+        elif "who" in title_lower or "who" in external_id.lower():
+            org_slug = "who-cambodia"
+            org_name = "World Health Organization (WHO) Cambodia"
+        elif "undp" in title_lower or "undp" in external_id.lower():
+            org_slug = "undp-cambodia"
+            org_name = "UNDP Cambodia"
 
         return NormalizedTenderData(
             source_code=self.code,
@@ -119,7 +132,8 @@ class UNGMCambodiaSource(BaseSource):
             slug=slug,
             description=desc,
             summary=desc[:240] + "..." if len(desc) > 240 else desc,
-            organization_slug="ungm-cambodia",
+            organization_slug=org_slug,
+            organization_name=org_name,
             category_slug=cat_slug,
             location="Cambodia (Multi-Provincial)",
             published_at=published_at,

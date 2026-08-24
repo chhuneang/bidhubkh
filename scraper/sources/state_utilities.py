@@ -103,16 +103,18 @@ class StateUtilitiesSource(BaseSource):
         title_lower = title.lower()
         source_lower = (raw.source_url or "").lower()
         if "ppwsa" in title_lower or "ppwsa" in source_lower or "water" in title_lower:
-            organization_slug = "ppwsa-cambodia"
+            organization_slug = "ppwsa"
+            organization_name = "Phnom Penh Water Supply Authority (PPWSA)"
         else:
-            organization_slug = "edc-cambodia"
+            organization_slug = "edc"
+            organization_name = "Electricité du Cambodge (EDC)"
 
         if any(k in title_lower for k in ["power", "cable", "transformer", "electrical", "solar"]):
-            cat_slug = "energy-renewables"
+            cat_slug = "electrical-energy"
         elif any(k in title_lower for k in ["pipe", "water", "ductile iron", "treatment"]):
-            cat_slug = "water-sanitation"
+            cat_slug = "agriculture-water"
         else:
-            cat_slug = "construction-infrastructure"
+            cat_slug = "construction-civil"
 
         return NormalizedTenderData(
             source_code=self.code,
@@ -122,6 +124,7 @@ class StateUtilitiesSource(BaseSource):
             description=desc,
             summary=desc[:240] + "..." if len(desc) > 240 else desc,
             organization_slug=organization_slug,
+            organization_name=organization_name,
             category_slug=cat_slug,
             location="Phnom Penh & National Grid, Cambodia",
             published_at=published_at,

@@ -134,12 +134,25 @@ class NGOCambodiaSource(BaseSource):
                 pass
 
         title_lower = title.lower()
-        if any(k in title_lower for k in ["water", "borehole", "solar pump", "civil", "construction"]):
-            cat_slug = "water-sanitation"
+        if any(k in title_lower for k in ["water", "borehole", "solar pump", "irrigation"]):
+            cat_slug = "agriculture-water"
+        elif any(k in title_lower for k in ["civil", "construction", "building"]):
+            cat_slug = "construction-civil"
         elif any(k in title_lower for k in ["stem", "learning", "tablet", "education"]):
             cat_slug = "education-training"
         else:
             cat_slug = "consulting-services"
+
+        # Organization mapping
+        org_slug = "room-to-read"
+        org_name = "Cambodia NGO Sector Partners"
+        source_name = str(payload.get("source") or "").lower()
+        if "wateraid" in title_lower or "wateraid" in source_name or "borehole" in title_lower:
+            org_slug = "wateraid-cambodia"
+            org_name = "WaterAid Cambodia"
+        elif "room to read" in title_lower or "roomtoread" in title_lower or "stem" in title_lower or "tablet" in title_lower:
+            org_slug = "room-to-read"
+            org_name = "Room to Read Cambodia"
 
         return NormalizedTenderData(
             source_code=self.code,
@@ -148,7 +161,8 @@ class NGOCambodiaSource(BaseSource):
             slug=slug,
             description=desc,
             summary=desc[:240] + "..." if len(desc) > 240 else desc,
-            organization_slug=(payload.get("source") or "ngo-cambodia").lower().replace(" ", "-"),
+            organization_slug=org_slug,
+            organization_name=org_name,
             category_slug=cat_slug,
             location="Cambodia",
             published_at=published_at,

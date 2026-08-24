@@ -140,6 +140,21 @@ Output ONLY a JSON object with these keys:
                     content = data["choices"][0]["message"]["content"]
                     parsed = self._extract_json_block(content)
                     if parsed and "summary" in parsed:
+                        raw_est = parsed.get("estimated_value")
+                        if isinstance(raw_est, dict):
+                            try:
+                                parsed["estimated_value"] = float(raw_est.get("amount") or raw_est.get("value") or 0.0) or None
+                            except Exception:
+                                parsed["estimated_value"] = None
+                        elif isinstance(raw_est, str):
+                            clean_val = re.sub(r'[^\d.]', '', raw_est)
+                            try:
+                                parsed["estimated_value"] = float(clean_val) if clean_val else None
+                            except Exception:
+                                parsed["estimated_value"] = None
+                        elif not isinstance(raw_est, (int, float)):
+                            parsed["estimated_value"] = None
+
                         print(f"[OpenRouterExtractor] 🤖 Extracted using model: {model}")
                         return TenderAIExtractionResult(**parsed)
             except Exception as e:

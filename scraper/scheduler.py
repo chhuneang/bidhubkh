@@ -1,52 +1,126 @@
 """
-BidHubKH — Autonomous Background Ingestion Scheduler
-Executes automated, scheduled sweeps across all 6 Cambodian procurement sources,
-orchestrating AI intelligence summarization and instant Telegram alert dispatch.
+BidHubKH — Autonomous Ingestion Scheduler
+Executes automated, recurring sweeps across all 6 official Cambodian procurement sources,
+extracts real opportunities, generates AI intelligence summaries, validates URLs, and dispatches real-time alerts.
+
+Usage:
+  python -m scraper.scheduler --hours 4       # Sweep every 4 hours (default)
+  python -m scraper.scheduler --hours 6       # Sweep every 6 hours
+  python -m scraper.scheduler --once          # Run a single sweep immediately and exit
 """
 
 import argparse
 import logging
+import os
+import signal
+import sys
 import time
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
+from dotenv import load_dotenv
 
 from scraper.ingest import run_ingestion
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
-logger = logging.getLogger("BidHubKH-Scheduler")
+load_dotenv()
 
-def start_scheduler(interval_minutes: int = 360, run_once: bool = False):
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S"
+)
+logger = logging.getLogger("Scheduler")
+
+_shutdown_requested = False
+
+
+def _signal_handler(sig, frame):
+    global _shutdown_requested
+    logger.info("🛑 Graceful shutdown signal received. Finishing active operations...")
+    _shutdown_requested = True
+    sys.exit(0)
+
+
+def start_scheduler(interval_hours: float = 4.0, run_once: bool = False):
     """
-    Runs periodic crawler sweeps across all 6 procurement sources.
-    Default interval: 360 minutes (every 6 hours).
+    Runs periodic crawler sweeps across all 6 official Cambodian procurement sources.
+    Default interval: 4 hours (240 minutes).
     """
-    logger.info(f"🚀 Starting BidHubKH Ingestion Scheduler (Interval: {interval_minutes} mins)")
+    global _shutdown_requested
+    signal.signal(signal.SIGINT, _signal_handler)
+    try:
+        signal.signal(signal.SIGTERM, _signal_handler)
+    except Exception:
+        pass
+
+    interval_minutes = int(interval_hours * 60)
+    interval_seconds = interval_minutes * 60
+
+    logger.info("================================================================")
+    logger.info("🇰🇭 BIDHUBKH AUTONOMOUS PROCUREMENT INGESTION ENGINE")
+    logger.info(f"⏰ Recurring Interval : Every {interval_hours:g} hours ({interval_minutes} minutes)")
+    logger.info(f"🌐 Sources Included   : World Bank, ADB, MEF/GDPP, UNGM, NGOs, EDC/PPWSA")
+    logger.info("================================================================")
 
     iteration = 1
-    while True:
-        start_time = datetime.now()
-        logger.info("\n=======================================================")
-        logger.info(f"🔄 Starting Scheduled Ingestion Sweep #{iteration} at {start_time.isoformat()}")
-        logger.info("=======================================================")
+    while not _shutdown_requested:
+        sweep_start = datetime.now(timezone.utc)
+        logger.info(f"\n🚀 [Sweep #{iteration}] Starting automated crawler at {sweep_start.strftime('%Y-%m-%d %H:%M:%S UTC')}")
 
         try:
-            # Run multi-source pipeline for all 6 sources
+            # Execute full multi-source ingestion pipeline
             run_ingestion(source_choice="all", enable_ai=True)
-            logger.info(f"✅ Scheduled sweep #{iteration} completed successfully.")
-        except Exception as e:
-            logger.error(f"❌ Scheduled sweep #{iteration} encountered an error: {e}")
+            sweep_duration = (datetime.now(timezone.utc) - sweep_start).total_seconds()
+            logger.info(f"✅ [Sweep #{iteration}] Completed successfully in {sweep_duration:.1f}s.")
+        except Exception as err:
+            logger.error(f"❌ [Sweep #{iteration}] Error during ingestion sweep: {err}", exc_info=True)
 
-        if run_once:
+        if run_once or _shutdown_requested:
             logger.info("Scheduler execution finished (--once mode).")
             break
 
-        logger.info(f"⏳ Sleeping for {interval_minutes} minutes until next scheduled sweep...")
-        time.sleep(interval_minutes * 60)
+        next_run = datetime.now(timezone.utc) + timedelta(seconds=interval_seconds)
+        logger.info(f"⏳ Sleeping for {interval_hours:g} hours. Next automated sweep at: {next_run.strftime('%Y-%m-%d %H:%M:%S UTC')} (in {interval_minutes}m)")
+        
+        # Sleep with 1-second ticks for instant Ctrl+C response
+        for _ in range(interval_seconds):
+            if _shutdown_requested:
+                break
+            time.sleep(1)
+
         iteration += 1
 
-if __name__ == "__main__":
+
+def main():
+    default_hours = float(os.getenv("SCHEDULE_INTERVAL_HOURS", "4.0"))
+
     parser = argparse.ArgumentParser(description="BidHubKH Autonomous Ingestion Scheduler")
-    parser.add_argument("--interval", type=int, default=360, help="Sweep interval in minutes (default: 360)")
-    parser.add_argument("--once", action="store_true", help="Run a single sweep and exit")
+    parser.add_argument(
+        "--hours",
+        "-H",
+        type=float,
+        default=default_hours,
+        help=f"Recurring sweep interval in hours (default: {default_hours:g}h, configurable via SCHEDULE_INTERVAL_HOURS)"
+    )
+    parser.add_argument(
+        "--interval",
+        "-i",
+        type=int,
+        default=None,
+        help="Recurring sweep interval in minutes (overrides --hours)"
+    )
+    parser.add_argument(
+        "--once",
+        action="store_true",
+        help="Run a single full sweep immediately and exit"
+    )
     args = parser.parse_args()
 
-    start_scheduler(interval_minutes=args.interval, run_once=args.once)
+    if args.interval is not None:
+        hours = args.interval / 60.0
+    else:
+        hours = args.hours
+
+    start_scheduler(interval_hours=hours, run_once=args.once)
+
+
+if __name__ == "__main__":
+    main()

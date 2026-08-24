@@ -307,5 +307,24 @@ class IngestionPipeline:
             "duplicate_review": review_count,
             "errors": error_count,
         }
+
+        # Update source health metrics in database
+        if self.client:
+            try:
+                now_iso = datetime.now(timezone.utc).isoformat()
+                update_payload = {
+                    "last_checked_at": now_iso,
+                    "updated_at": now_iso
+                }
+                if error_count == 0:
+                    update_payload["last_success_at"] = now_iso
+                    update_payload["last_error"] = None
+                else:
+                    update_payload["last_error"] = f"{error_count} error(s) encountered during last crawl"
+
+                self.client.from_("sources").update(update_payload).eq("code", source.code).execute()
+            except Exception as src_err:
+                print(f"[Pipeline Warning] Could not update source health timestamps: {src_err}")
+
         print(f"[Pipeline] Finished {source.code}: {summary}")
         return summary

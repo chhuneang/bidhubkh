@@ -122,10 +122,10 @@ class TestParseAndNormalize:
 
     def test_organization_slug_follows_source_url(self):
         edc = self.source.parse_and_normalize(self._synthetic())
-        assert edc.organization_slug == "edc-cambodia"
+        assert edc.organization_slug == "edc"
         ppwsa = self.source.parse_and_normalize(
             self._synthetic(title="Water main works", url="https://www.ppwsa.com.kh/t/1"))
-        assert ppwsa.organization_slug == "ppwsa-cambodia"
+        assert ppwsa.organization_slug == "ppwsa"
 
     def test_category_branches(self):
         energy = self.source.parse_and_normalize(
@@ -134,9 +134,9 @@ class TestParseAndNormalize:
             self._synthetic(title="Ductile iron pipe delivery", url="https://www.ppwsa.com.kh/t/2"))
         other = self.source.parse_and_normalize(
             self._synthetic(title="Headquarters renovation"))
-        assert energy.category_slug == "energy-renewables"
-        assert water.category_slug == "water-sanitation"
-        assert other.category_slug == "construction-infrastructure"
+        assert energy.category_slug == "electrical-energy"
+        assert water.category_slug == "agriculture-water"
+        assert other.category_slug == "construction-civil"
 
     def test_products_and_requirements_default_empty(self):
         n = self.source.parse_and_normalize(self._synthetic())

@@ -14,6 +14,7 @@ This module is pure: no database, no network. See scraper/tests/test_validators.
 from __future__ import annotations
 
 import re
+from datetime import datetime, timezone
 from typing import List, Optional
 from urllib.parse import urlparse
 
@@ -103,12 +104,15 @@ def validate_tender(
                    "Organization name is missing.")
         )
 
-    if published_at and deadline and deadline <= published_at:
-        issues.append(
-            _issue("deadline_after_published", CRITICAL,
-                   "Deadline must be after published_at "
-                   f"(deadline={deadline.isoformat()}, published={published_at.isoformat()}).")
-        )
+    if published_at and deadline:
+        p_dt = published_at if getattr(published_at, "tzinfo", None) else published_at.replace(tzinfo=timezone.utc)
+        d_dt = deadline if getattr(deadline, "tzinfo", None) else deadline.replace(tzinfo=timezone.utc)
+        if d_dt <= p_dt:
+            issues.append(
+                _issue("deadline_after_published", CRITICAL,
+                       "Deadline must be after published_at "
+                       f"(deadline={d_dt.isoformat()}, published={p_dt.isoformat()}).")
+            )
 
     if estimated_value is not None and estimated_value < 0:
         issues.append(

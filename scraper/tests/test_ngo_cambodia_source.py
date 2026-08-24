@@ -123,7 +123,7 @@ class TestParseAndNormalize:
     def test_category_water_branch(self):
         n = self.source.parse_and_normalize(
             self._synthetic(title="ITB: Drilling of Boreholes with Solar Pumps"))
-        assert n.category_slug == "water-sanitation"
+        assert n.category_slug == "agriculture-water"
 
     def test_category_education_branch(self):
         n = self.source.parse_and_normalize(
@@ -137,7 +137,7 @@ class TestParseAndNormalize:
 
     def test_organization_slug_from_source_shortname(self):
         n = self.source.parse_and_normalize(self._synthetic())
-        assert n.organization_slug == "example-ngo"
+        assert n.organization_slug == "wateraid-cambodia"
 
     def test_slug_format(self):
         n = self.source.parse_and_normalize(self._synthetic())

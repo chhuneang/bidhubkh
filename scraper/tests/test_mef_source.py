@@ -129,7 +129,7 @@ class TestParseAndNormalize:
 
     def test_organization_and_category_defaults(self):
         n = self.source.parse_and_normalize(self._synthetic())
-        assert n.organization_slug == "mef-cambodia"
+        assert n.organization_slug == "mef"
         assert n.category_slug == "consulting-services"
 
     def test_category_from_payload_when_provided(self):
