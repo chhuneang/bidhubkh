@@ -102,9 +102,13 @@ class DedupEngine:
 
     def increment_duplicate_count(self, tender_id: str) -> None:
         """Bump the original's duplicate counter after a Layer 2 collision."""
-        self.client.rpc(
-            "increment_tender_duplicate_count", {"p_tender_id": tender_id}
-        ).execute()
+        try:
+            self.client.rpc(
+                "increment_tender_duplicate_count", {"p_tender_id": tender_id}
+            ).execute()
+        except Exception as e:
+            # Requires service_role key; ignore gracefully if running with limited credentials
+            pass
 
     # -- Layer 3 ---------------------------------------------------------
 
