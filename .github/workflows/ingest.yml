@@ -12,8 +12,8 @@ name: Ingest tenders
 
 on:
   schedule:
-    # Every 6 hours at :17 — off the congested top-of-hour window.
-    - cron: "17 */6 * * *"
+    # Every 4 hours at :17 — off the congested top-of-hour window.
+    - cron: "17 */4 * * *"
   workflow_dispatch:
     inputs:
       source:

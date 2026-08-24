@@ -20,7 +20,8 @@ import {
   Clock,
   Share2,
   Layers,
-  MapPin
+  MapPin,
+  Download
 } from 'lucide-react'
 import { SaveTenderButton } from '@/components/tenders/SaveTenderButton'
 import { SupplierMatchCard } from '@/components/tenders/SupplierMatchCard'
@@ -239,6 +240,64 @@ export default async function TenderDetailPage({
                 </ul>
               </div>
             )}
+            {/* OFFICIAL ATTACHED SBD DOCUMENTS & TECHNICAL SPECIFICATIONS */}
+            {documents.length > 0 && (
+              <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-xs">
+                <div className="flex items-center justify-between gap-4 mb-4">
+                  <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-blue-600" />
+                    Official Bidding Documents & Specifications ({documents.length})
+                  </h2>
+                  <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                    <CheckCircle2 className="h-3 w-3 text-emerald-600" /> Verified Authority PDFs
+                  </span>
+                </div>
+
+                <div className="space-y-3">
+                  {documents.map((doc: any, idx: number) => {
+                    const sizeMb = doc.file_size_bytes
+                      ? (doc.file_size_bytes / (1024 * 1024)).toFixed(1) + ' MB'
+                      : 'PDF Document'
+                    return (
+                      <div
+                        key={idx}
+                        className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-blue-300 transition-all card-interactive"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="p-2.5 rounded-xl bg-blue-100/70 text-blue-700 shrink-0 mt-0.5">
+                            <FileText className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <h3 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">
+                              {doc.name}
+                            </h3>
+                            <div className="flex items-center gap-2 mt-1 text-[11px] text-slate-500 font-medium">
+                              <span className="bg-white px-2 py-0.5 rounded border border-slate-200 font-mono text-[10px] text-slate-600">
+                                {sizeMb}
+                              </span>
+                              <span>•</span>
+                              <span>Official SBD File</span>
+                              <span>•</span>
+                              <span className="text-emerald-700 font-semibold">Direct Authority Download</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <a
+                          href={`/api/tenders/${tender.slug}/pdf`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 text-xs font-bold shadow-xs transition-all shrink-0 cursor-pointer active:scale-95"
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                          <span>Download PDF</span>
+                        </a>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* RIGHT SIDEBAR: Key Dates, Budget, Actions */}
@@ -280,10 +339,20 @@ export default async function TenderDetailPage({
               {/* Action Buttons */}
               <div className="pt-4 border-t border-slate-100 space-y-3">
                 <a
+                  href={`/api/tenders/${tender.slug}/pdf`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3.5 text-xs font-black text-white shadow-xs hover:bg-emerald-700 transition-all cursor-pointer group active:scale-95"
+                >
+                  <Download className="h-4 w-4 group-hover:-translate-y-0.5 transition-transform" />
+                  <span>Download Official Bidding Document (PDF)</span>
+                </a>
+
+                <a
                   href={tender.original_url || 'https://projects.worldbank.org/en/projects-operations/procurement?countrycode_exact=KH'}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition-all cursor-pointer group"
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-white border-2 border-slate-200 text-slate-800 hover:border-blue-400 hover:text-blue-600 shadow-xs px-4 py-3 text-xs font-bold transition-all cursor-pointer group"
                 >
                   <span>View Official Notice on {tender.source?.name || 'Portal'}</span>
                   <ExternalLink className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
@@ -334,26 +403,32 @@ export default async function TenderDetailPage({
 
               {documents.length > 0 && (
                 <div className="space-y-2 pt-2">
-                  <span className="text-[11px] font-bold text-slate-900 uppercase tracking-wider block">Attached SBD Documents ({documents.length})</span>
-                  {documents.map((doc: any, idx: number) => (
-                    <div
-                      key={idx}
-                      className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-3 text-xs"
-                    >
-                      <div className="truncate">
-                        <span className="font-semibold text-slate-900 block truncate">{doc.name}</span>
-                        <span className="text-[10px] text-slate-500">{doc.document_type || 'PDF Document'}</span>
-                      </div>
-                      <a
-                        href={doc.original_url || tender.original_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-700 shrink-0 font-semibold flex items-center gap-1"
+                  <span className="text-[11px] font-bold text-slate-900 uppercase tracking-wider block">Attached Official Files ({documents.length})</span>
+                  {documents.map((doc: any, idx: number) => {
+                    const sizeMb = doc.file_size_bytes
+                      ? (doc.file_size_bytes / (1024 * 1024)).toFixed(1) + ' MB'
+                      : 'PDF'
+                    return (
+                      <div
+                        key={idx}
+                        className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-3 text-xs hover:border-slate-300 transition-colors"
                       >
-                        Download <ExternalLink className="h-3 w-3" />
-                      </a>
-                    </div>
-                  ))}
+                        <div className="truncate flex-1">
+                          <span className="font-semibold text-slate-900 block truncate">{doc.name}</span>
+                          <span className="text-[10px] text-slate-500 font-mono">{sizeMb} • Official PDF</span>
+                        </div>
+                        <a
+                          href={`/api/tenders/${tender.slug}/pdf`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-emerald-700 hover:text-emerald-800 shrink-0 font-bold flex items-center gap-1 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2.5 py-1 rounded-lg transition-colors text-[11px]"
+                        >
+                          <Download className="h-3 w-3" />
+                          <span>PDF</span>
+                        </a>
+                      </div>
+                    )
+                  })}
                 </div>
               )}
             </div>
