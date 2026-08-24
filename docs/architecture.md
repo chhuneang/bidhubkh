@@ -54,5 +54,5 @@
 ## 3. Database & Security
 * Built on PostgreSQL (Supabase).
 * All tables enforce Row Level Security (RLS).
-* Admins are verified through Postgres `user_roles` table with `is_admin()` and `is_moderator()` security definer functions.
+* Admins are verified through Postgres `user_roles` table with `is_admin()` and `is_moderator()` security definer functions living in a dedicated non-exposed `helpers` schema (migration `00006`) so anonymous clients cannot call them via the REST API.
 * Full-text search leverages PostgreSQL GIN indexes and `pg_trgm` for resilient search even with slight typographical errors or varying transliterations.
