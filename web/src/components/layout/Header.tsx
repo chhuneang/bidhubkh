@@ -15,8 +15,7 @@ import {
   User,
   Menu,
   X,
-  Sparkles,
-  Zap
+  Sparkles
 } from 'lucide-react'
 
 export function Header() {
@@ -57,14 +56,6 @@ export function Header() {
       activeColor: 'text-indigo-600 bg-white border-indigo-200 shadow-xs ring-2 ring-indigo-500/10',
       hoverColor: 'hover:text-indigo-600 hover:bg-indigo-50/60',
       badgeDot: 'bg-indigo-500',
-    },
-    {
-      name: 'Pricing',
-      href: '/pricing',
-      icon: Zap,
-      activeColor: 'text-emerald-700 bg-white border-emerald-200 shadow-xs ring-2 ring-emerald-500/10',
-      hoverColor: 'hover:text-emerald-700 hover:bg-emerald-50/60',
-      badgeDot: 'bg-emerald-500',
     },
     {
       name: 'Sources Health',

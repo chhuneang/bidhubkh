@@ -91,7 +91,6 @@ export function Footer() {
         <div className="border-t border-slate-100 pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
           <p>© {new Date().getFullYear()} BidHubKH (ប៊ីតហាប់). All rights reserved.</p>
           <div className="flex items-center gap-6">
-            <Link href="/pricing" className="hover:text-blue-600 transition-colors">Pricing</Link>
             <Link href="/sources" className="hover:text-blue-600 transition-colors">Sources Health</Link>
             <Link href="/tenders" className="hover:text-blue-600 transition-colors">Catalog</Link>
           </div>

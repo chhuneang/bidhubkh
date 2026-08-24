@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { countPublicTenders, publicTenders } from '@/lib/tenders'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import {
@@ -128,11 +129,19 @@ export default async function SourcesPage() {
       const tendersCount = await countPublicTenders(supabase)
       if (typeof tendersCount === 'number') totalTenders = tendersCount
 
-      // 2. Fetch raw payloads count
-      const { count: rawTendersCount } = await supabase
-        .from('raw_tenders')
-        .select('*', { count: 'exact', head: true })
-      if (typeof rawTendersCount === 'number') rawCount = rawTendersCount
+      // 2. Fetch raw payloads count — raw_tenders is moderators-only under RLS,
+      //    so read it with the server-only service role key when configured.
+      if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        const admin = createSupabaseClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY,
+          { auth: { persistSession: false } }
+        )
+        const { count: rawTendersCount } = await admin
+          .from('raw_tenders')
+          .select('*', { count: 'exact', head: true })
+        if (typeof rawTendersCount === 'number') rawCount = rawTendersCount
+      }
 
       // 3. Fetch recent tenders (shared public helper — published + approved)
       const { data: dbTenders } = await publicTenders(supabase)

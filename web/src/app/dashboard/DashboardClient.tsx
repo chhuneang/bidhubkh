@@ -67,7 +67,7 @@ export function DashboardClient({
   recommendedTenders = []
 }: DashboardClientProps) {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<'pipeline' | 'matches' | 'company' | 'alerts' | 'billing'>('pipeline')
+  const [activeTab, setActiveTab] = useState<'pipeline' | 'matches' | 'company' | 'alerts'>('pipeline')
   const [stageFilter, setStageFilter] = useState('all')
   const [isPending, startTransition] = useTransition()
   const [profileSuccess, setProfileSuccess] = useState(false)
@@ -328,19 +328,6 @@ export function DashboardClient({
           <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-800 font-bold">
             {alerts.length}
           </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('billing')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 shrink-0 cursor-pointer ${
-            activeTab === 'billing'
-              ? 'bg-white text-emerald-700 shadow-xs border border-emerald-200 ring-2 ring-emerald-500/10 scale-[1.02]'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-white/60 border border-transparent'
-          }`}
-        >
-          <span className="text-emerald-600 font-bold">$</span>
-          <span>Plan & Bakong Billing</span>
         </button>
       </div>
 
@@ -837,75 +824,6 @@ export function DashboardClient({
               </div>
             </div>
           )}
-        </div>
-      )}
-
-      {/* TAB 5: PLAN & BAKONG BILLING */}
-      {activeTab === 'billing' && (
-        <div className="space-y-6">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-600 text-white font-black text-xs shadow-sm">
-                  KH
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-slate-900">Active Subscription Plan</h3>
-                  <p className="text-xs text-slate-500 font-medium">
-                    Cambodian Bakong KHQR & Corporate Invoicing
-                  </p>
-                </div>
-              </div>
-
-              <Link
-                href="/pricing"
-                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-blue-700 transition-all shadow-xs shrink-0"
-              >
-                <Sparkles className="h-3.5 w-3.5" />
-                Change or Upgrade Plan
-              </Link>
-            </div>
-
-            {/* Current Plan Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                <span className="text-xs text-slate-500 font-medium block">Subscription Tier</span>
-                <span className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                  Pro Supplier
-                  <span className="text-[10px] bg-emerald-50 border border-emerald-200 text-emerald-700 px-2 py-0.5 rounded-md font-bold">
-                    Active
-                  </span>
-                </span>
-                <p className="text-[11px] text-slate-500 font-medium">Billed monthly via Bakong KHQR</p>
-              </div>
-
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                <span className="text-xs text-slate-500 font-medium block">AI Extraction Quota</span>
-                <span className="text-lg font-bold text-blue-600">Unlimited</span>
-                <p className="text-[11px] text-slate-500 font-medium">Full BOQ & Win probability models</p>
-              </div>
-
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                <span className="text-xs text-slate-500 font-medium block">Telegram Alert Channels</span>
-                <span className="text-lg font-bold text-blue-600">Up to 10 Rules</span>
-                <p className="text-[11px] text-slate-500 font-medium">Real-time instant bot push alerts</p>
-              </div>
-            </div>
-
-            {/* Invoicing info */}
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs text-slate-600">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-emerald-600" />
-                <span className="font-medium">Payment Method: <strong className="text-slate-900">Bakong KHQR (NBC Standard)</strong></span>
-              </div>
-              <Link
-                href="/pricing"
-                className="text-blue-600 hover:text-blue-700 font-bold"
-              >
-                View Plans →
-              </Link>
-            </div>
-          </div>
         </div>
       )}
     </div>
