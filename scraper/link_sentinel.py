@@ -79,39 +79,31 @@ class LinkSentinel:
         Pings a URL to check validity (HTTP 200/301/302).
         Returns: (is_valid, final_url_or_fallback, http_status)
         """
+        fallback = self.get_fallback_for_source(source_code)
         if not url or not url.startswith("http"):
-            fallback = self.get_fallback_for_source(source_code)
             return False, fallback, 400
 
         try:
-            # Try HEAD first (fast)
             resp = requests.head(url, headers=self.headers, timeout=6, allow_redirects=True)
             if resp.status_code in [200, 301, 302, 307, 308]:
                 return True, resp.url, resp.status_code
-            
-            # If HEAD blocked with 403/405, fallback to GET with byte-limit
-            if resp.status_code in [403, 405, 404]:
-                get_resp = requests.get(url, headers=self.headers, timeout=8, stream=True, allow_redirects=True)
-                if get_resp.status_code in [200, 301, 302]:
-                    return True, get_resp.url, get_resp.status_code
-                else:
-                    fallback = self.get_fallback_for_source(source_code)
-                    return False, fallback, get_resp.status_code
-            
-            fallback = self.get_fallback_for_source(source_code)
-            return False, fallback, resp.status_code
 
+            if resp.status_code in [403, 404, 405]:
+                resp = requests.get(url, headers=self.headers, timeout=8, stream=True, allow_redirects=True)
+                if resp.status_code in [200, 301, 302]:
+                    return True, resp.url, resp.status_code
+
+            return False, fallback, resp.status_code
         except Exception as e:
             logger.debug(f"Connection check error for {url}: {e}")
-            fallback = self.get_fallback_for_source(source_code)
             return False, fallback, 0
 
     def get_fallback_for_source(self, source_code: str) -> str:
         """Returns the verified official parent portal fallback for a given source code."""
-        reg = AUTHORITY_PORTAL_REGISTRY.get(source_code)
-        if reg:
-            return reg["fallback_url"]
-        return "https://projects.worldbank.org/en/projects-operations/procurement?countrycode_exact=KH"
+        return AUTHORITY_PORTAL_REGISTRY.get(source_code, {}).get(
+            "fallback_url",
+            "https://projects.worldbank.org/en/projects-operations/procurement?countrycode_exact=KH"
+        )
 
     def audit_and_remediate_database(self) -> Dict[str, Any]:
         """

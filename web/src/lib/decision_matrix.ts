@@ -38,13 +38,11 @@ export function computeBidDecision(
     description?: string | null
   } | null
 ): BidDecisionResult {
-  const products: string[] = Array.isArray(tender.products_services)
-    ? tender.products_services
-    : (typeof tender.products_services === 'string' ? JSON.parse(tender.products_services || '[]') : [])
+  const parseList = (val: any): string[] =>
+    Array.isArray(val) ? val : (typeof val === 'string' ? JSON.parse(val || '[]') : [])
 
-  const requirements: string[] = Array.isArray(tender.requirements)
-    ? tender.requirements
-    : (typeof tender.requirements === 'string' ? JSON.parse(tender.requirements || '[]') : [])
+  const products = parseList(tender.products_services)
+  const requirements = parseList(tender.requirements)
 
   // 1. Calculate Days Remaining
   let daysRemaining = 30
@@ -127,44 +125,40 @@ export function computeBidDecision(
   }
   strategicAdvantages.push('High extraction confidence on procurement specifications ensures accurate cost estimation.')
 
-  // 5. Decision Assignment
-  let decision: 'BID' | 'BID_WITH_CAUTION' | 'NO_BID' = 'BID_WITH_CAUTION'
-  let decisionLabel = 'Bid with Caution / Joint Venture'
-  let badgeClass = 'text-amber-400 bg-amber-500/10 border-amber-500/30'
-  let riskLevel: 'Low Risk' | 'Moderate Risk' | 'High Risk' = 'Moderate Risk'
-  let riskBadgeClass = 'text-amber-400 bg-amber-500/10 border-amber-500/30'
-  let executiveAdvice = ''
+  // 5. Decision Profile
+  const isBid = winProbability >= 75 && scheduleFeasibility >= 60 && Boolean(company?.tax_id)
+  const isCaution = !isBid && winProbability >= 50
 
-  if (winProbability >= 75 && scheduleFeasibility >= 60 && company?.tax_id) {
-    decision = 'BID'
-    decisionLabel = 'Bid with Confidence 🚀'
-    badgeClass = 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30'
-    riskLevel = 'Low Risk'
-    riskBadgeClass = 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30'
-    executiveAdvice = 'Strong commercial fit with high win probability. Proceed immediately to SBD document review and distributor price requests.'
-  } else if (winProbability >= 50) {
-    decision = 'BID_WITH_CAUTION'
-    decisionLabel = 'Bid with Caution ⚠️'
-    badgeClass = 'text-cyan-400 bg-cyan-500/10 border-cyan-500/30'
-    riskLevel = 'Moderate Risk'
-    riskBadgeClass = 'text-cyan-400 bg-cyan-500/10 border-cyan-500/30'
-    executiveAdvice = 'Opportunity is commercially viable, but requires partnering with a certified subcontractor or joint-venture partner to satisfy full specs.'
-  } else {
-    decision = 'NO_BID'
-    decisionLabel = 'No-Bid Recommended 🛑'
-    badgeClass = 'text-rose-400 bg-rose-500/10 border-rose-500/30'
-    riskLevel = 'High Risk'
-    riskBadgeClass = 'text-rose-400 bg-rose-500/10 border-rose-500/30'
-    executiveAdvice = 'High barrier to entry or insufficient preparation time. Bidding resource investment is not justified by expected win margins.'
-  }
+  const profile = isBid
+    ? {
+        decision: 'BID' as const,
+        decisionLabel: 'Bid with Confidence 🚀',
+        badgeClass: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30',
+        riskLevel: 'Low Risk' as const,
+        riskBadgeClass: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30',
+        executiveAdvice: 'Strong commercial fit with high win probability. Proceed immediately to SBD document review and distributor price requests.'
+      }
+    : isCaution
+    ? {
+        decision: 'BID_WITH_CAUTION' as const,
+        decisionLabel: 'Bid with Caution ⚠️',
+        badgeClass: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/30',
+        riskLevel: 'Moderate Risk' as const,
+        riskBadgeClass: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/30',
+        executiveAdvice: 'Opportunity is commercially viable, but requires partnering with a certified subcontractor or joint-venture partner to satisfy full specs.'
+      }
+    : {
+        decision: 'NO_BID' as const,
+        decisionLabel: 'No-Bid Recommended 🛑',
+        badgeClass: 'text-rose-400 bg-rose-500/10 border-rose-500/30',
+        riskLevel: 'High Risk' as const,
+        riskBadgeClass: 'text-rose-400 bg-rose-500/10 border-rose-500/30',
+        executiveAdvice: 'High barrier to entry or insufficient preparation time. Bidding resource investment is not justified by expected win margins.'
+      }
 
   return {
     winProbability,
-    decision,
-    decisionLabel,
-    badgeClass,
-    riskLevel,
-    riskBadgeClass,
+    ...profile,
     breakdown: {
       capabilityFit,
       marginViability,
@@ -172,7 +166,6 @@ export function computeBidDecision(
       complianceEase
     },
     keyRisks,
-    strategicAdvantages,
-    executiveAdvice
+    strategicAdvantages
   }
 }

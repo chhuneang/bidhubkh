@@ -80,11 +80,10 @@ def start_scheduler(interval_hours: float = 4.0, run_once: bool = False):
         next_run = datetime.now(timezone.utc) + timedelta(seconds=interval_seconds)
         logger.info(f"⏳ Sleeping for {interval_hours:g} hours. Next automated sweep at: {next_run.strftime('%Y-%m-%d %H:%M:%S UTC')} (in {interval_minutes}m)")
         
-        # Sleep with 1-second ticks for instant Ctrl+C response
-        for _ in range(interval_seconds):
-            if _shutdown_requested:
-                break
-            time.sleep(1)
+        try:
+            time.sleep(interval_seconds)
+        except (KeyboardInterrupt, SystemExit):
+            break
 
         iteration += 1
 
@@ -101,25 +100,13 @@ def main():
         help=f"Recurring sweep interval in hours (default: {default_hours:g}h, configurable via SCHEDULE_INTERVAL_HOURS)"
     )
     parser.add_argument(
-        "--interval",
-        "-i",
-        type=int,
-        default=None,
-        help="Recurring sweep interval in minutes (overrides --hours)"
-    )
-    parser.add_argument(
         "--once",
         action="store_true",
         help="Run a single full sweep immediately and exit"
     )
     args = parser.parse_args()
 
-    if args.interval is not None:
-        hours = args.interval / 60.0
-    else:
-        hours = args.hours
-
-    start_scheduler(interval_hours=hours, run_once=args.once)
+    start_scheduler(interval_hours=args.hours, run_once=args.once)
 
 
 if __name__ == "__main__":

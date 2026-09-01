@@ -22,34 +22,29 @@ from scraper.sources.ungm import UNGMCambodiaSource
 from scraper.sources.world_bank import WorldBankCambodiaSource
 
 
+SOURCES = {
+    "world_bank_kh": WorldBankCambodiaSource,
+    "adb_kh": ADBCambodiaSource,
+    "mef_gdipp": MEFSource,
+    "ungm": UNGMCambodiaSource,
+    "ngo_cambodia": NGOCambodiaSource,
+    "state_utilities": StateUtilitiesSource,
+}
+
+
 def run_ingestion(source_choice: str = "all", enable_ai: bool = True):
     """Executes the ingestion pipeline for requested sources."""
-    pipeline = IngestionPipeline()
-    sources = []
-
-    if source_choice in ["world_bank_kh", "all"]:
-        sources.append(WorldBankCambodiaSource())
-
-    if source_choice in ["adb_kh", "all"]:
-        sources.append(ADBCambodiaSource())
-
-    if source_choice in ["mef_gdipp", "all"]:
-        sources.append(MEFSource())
-
-    if source_choice in ["ungm", "all"]:
-        sources.append(UNGMCambodiaSource())
-
-    if source_choice in ["ngo_cambodia", "all"]:
-        sources.append(NGOCambodiaSource())
-
-    if source_choice in ["state_utilities", "all"]:
-        sources.append(StateUtilitiesSource())
-
-    if not sources:
-        print(f"Error: Unknown source '{source_choice}'. Valid options: 'world_bank_kh', 'adb_kh', 'mef_gdipp', 'ungm', 'ngo_cambodia', 'state_utilities', 'all'")
+    if source_choice == "all":
+        sources = [cls() for cls in SOURCES.values()]
+    elif source_choice in SOURCES:
+        sources = [SOURCES[source_choice]()]
+    else:
+        valid_keys = "', '".join(SOURCES.keys())
+        print(f"Error: Unknown source '{source_choice}'. Valid options: '{valid_keys}', 'all'")
         sys.exit(1)
 
     print(f"\n[Ingest] Launching BidHubKH Ingestion Engine for {len(sources)} source(s)...")
+    pipeline = IngestionPipeline()
     for source in sources:
         pipeline.run_source(source, enable_ai=enable_ai)
 

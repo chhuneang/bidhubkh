@@ -91,16 +91,11 @@ export async function GET(
     const cleanSummary = cleanTextForPdf(tender.summary || tender.description, '')
     const procMethod = cleanTextForPdf(tender.procurement_method, '')
 
-    const rawProducts: string[] = Array.isArray(tender.products_services)
-      ? tender.products_services
-      : (typeof tender.products_services === 'string' ? JSON.parse(tender.products_services) : [])
+    const parseList = (val: any): string[] =>
+      Array.isArray(val) ? val : (typeof val === 'string' ? JSON.parse(val || '[]') : [])
 
-    const rawRequirements: string[] = Array.isArray(tender.requirements)
-      ? tender.requirements
-      : (typeof tender.requirements === 'string' ? JSON.parse(tender.requirements) : [])
-
-    const products = rawProducts.map((p) => cleanTextForPdf(p)).filter(Boolean)
-    const requirements = rawRequirements.map((r) => cleanTextForPdf(r)).filter(Boolean)
+    const products = parseList(tender.products_services).map((p) => cleanTextForPdf(p)).filter(Boolean)
+    const requirements = parseList(tender.requirements).map((r) => cleanTextForPdf(r)).filter(Boolean)
 
     // Generate Standard Bidding Document PDF using jsPDF
     const doc = new jsPDF({
@@ -158,48 +153,25 @@ export async function GET(
     const col2X = 104
     const colWidth = 82
 
-    // Row 1: Reference & Budget
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(7.5)
-    doc.setTextColor(100, 116, 139)
-    doc.text('PROCUREMENT REFERENCE:', col1X, y + 5.5)
-    doc.text('ESTIMATED BUDGET:', col2X, y + 5.5)
+    const metaRows = [
+      { label1: 'PROCUREMENT REFERENCE:', val1: refNumber, label2: 'ESTIMATED BUDGET:', val2: budgetStr },
+      { label1: 'SUBMISSION DEADLINE:', val1: deadlineStr, label2: 'PROCUREMENT METHOD:', val2: procMethod || 'Not stated in notice' },
+      { label1: 'SECTOR CATEGORY:', val1: catName, label2: 'SOURCE PORTAL:', val2: srcName }
+    ]
 
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(8.5)
-    doc.setTextColor(15, 23, 42)
-    doc.text(refNumber, col1X, y + 9.5)
-    doc.text(budgetStr, col2X, y + 9.5)
+    metaRows.forEach((row, i) => {
+      const rowY = y + 5.5 + i * 11
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(7.5)
+      doc.setTextColor(100, 116, 139)
+      doc.text(row.label1, col1X, rowY)
+      doc.text(row.label2, col2X, rowY)
 
-    // Row 2: Deadline & Procurement Method
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(7.5)
-    doc.setTextColor(100, 116, 139)
-    doc.text('SUBMISSION DEADLINE:', col1X, y + 16.5)
-    doc.text('PROCUREMENT METHOD:', col2X, y + 16.5)
-
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(8.5)
-    doc.setTextColor(15, 23, 42)
-    doc.text(deadlineStr, col1X, y + 20.5)
-    const methodText = procMethod || 'Not stated in notice'
-    const splitMethod = doc.splitTextToSize(methodText, colWidth)
-    doc.text(splitMethod[0] || methodText, col2X, y + 20.5)
-
-    // Row 3: Category & Official Source Portal
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(7.5)
-    doc.setTextColor(100, 116, 139)
-    doc.text('SECTOR CATEGORY:', col1X, y + 27.5)
-    doc.text('SOURCE PORTAL:', col2X, y + 27.5)
-
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(8.5)
-    doc.setTextColor(15, 23, 42)
-    const splitCat = doc.splitTextToSize(catName, colWidth)
-    doc.text(splitCat[0] || catName, col1X, y + 31.5)
-    const splitSrc = doc.splitTextToSize(srcName, colWidth)
-    doc.text(splitSrc[0] || srcName, col2X, y + 31.5)
+      doc.setFontSize(8.5)
+      doc.setTextColor(15, 23, 42)
+      doc.text(doc.splitTextToSize(row.val1, colWidth)[0] || row.val1, col1X, rowY + 4)
+      doc.text(doc.splitTextToSize(row.val2, colWidth)[0] || row.val2, col2X, rowY + 4)
+    })
 
     y += boxHeight + 6
 
