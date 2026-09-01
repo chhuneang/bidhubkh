@@ -53,6 +53,16 @@ AUTHORITY_PORTAL_REGISTRY: Dict[str, Dict[str, Any]] = {
         "name": "Electricité du Cambodge (EDC) & PPWSA",
         "fallback_url": "https://www.edc.com.kh/procurement_page/procurement",
         "allowed_domains": ["edc.com.kh", "www.edc.com.kh", "ppwsa.com.kh", "www.ppwsa.com.kh"]
+    },
+    "jica_kh": {
+        "name": "Japan International Cooperation Agency (JICA) Cambodia",
+        "fallback_url": "https://www.jica.go.jp/english/our_work/types_of_assistance/oda_loans/oda_op_info/cambodia/index.html",
+        "allowed_domains": ["jica.go.jp", "www.jica.go.jp"]
+    },
+    "afd_eu_kh": {
+        "name": "Agence Française de Développement (AFD) & European Union (EU) Cambodia",
+        "fallback_url": "https://www.afd.fr/en/page-thematique-axe/procurement-notices",
+        "allowed_domains": ["afd.fr", "www.afd.fr", "eeas.europa.eu", "ec.europa.eu"]
     }
 }
 

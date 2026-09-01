@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <!-- Outer Bezel Container with High-End Dark Navy Base -->
+  <rect width="48" height="48" rx="12" fill="#0F172A"/>
+  
+  <!-- Subtle Radial Glow -->
+  <circle cx="24" cy="24" r="18" fill="#2563EB" opacity="0.2" filter="blur(4px)"/>
+  
+  <!-- Outer Orbit Rings -->
+  <circle cx="24" cy="24" r="18" stroke="#3B82F6" stroke-width="1.75" stroke-opacity="0.3" />
+  
+  <!-- Primary Royal Cobalt Arc -->
+  <path d="M10 24C10 16.268 16.268 10 24 10C29.5 10 34.2 13.1 36.5 17.5" stroke="#3B82F6" stroke-width="2.75" stroke-linecap="round"/>
+  <path d="M38 24C38 31.732 31.732 38 24 38C18.5 38 13.8 34.9 11.5 30.5" stroke="#2563EB" stroke-width="2.75" stroke-linecap="round"/>
+
+  <!-- Upward Bid Velocity Arrow (Amber Gold) -->
+  <path d="M14 34L34 14" stroke="#F59E0B" stroke-width="3" stroke-linecap="round"/>
+  <path d="M26 14H34V22" stroke="#F59E0B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Precision Auction Gavel (Royal Cobalt & Gold Highlight) -->
+  <rect x="15" y="19" width="11" height="5.5" rx="1.5" transform="rotate(-45 15 19)" fill="#3B82F6" stroke="#93C5FD" stroke-width="1.2"/>
+  
+  <!-- Sound Base -->
+  <rect x="12" y="31" width="7" height="3" rx="0.75" transform="rotate(-45 12 31)" fill="#F8FAFC" opacity="0.9"/>
+  
+  <!-- Center Target Pip -->
+  <circle cx="24" cy="24" r="1.75" fill="#F59E0B"/>
+</svg>

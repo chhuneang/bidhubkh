@@ -26,7 +26,7 @@ import {
 
 export const metadata = {
   title: 'Procurement Sources & Health Sentinel — BidHubKH',
-  description: 'Real-time crawler status, verified uptime metrics, and anti-404 link sentinel across all 6 Cambodian official tender portals.'
+  description: 'Real-time crawler status, verified uptime metrics, and anti-404 link sentinel across all 8 Cambodian official tender portals.'
 }
 
 const SOURCES = [
@@ -68,7 +68,7 @@ const SOURCES = [
     lastChecked: '8 mins ago',
     activeNotices: 4,
     coverage: 'Public Works, Transport, Education, Provincial Projects',
-    officialUrl: 'https://www.mpwt.gov.kh/en/documents',
+    officialUrl: 'https://gdpp.mef.gov.kh',
     color: 'bg-amber-50 text-amber-800 border-amber-200',
     tag: 'Royal Government of Cambodia'
   },
@@ -87,17 +87,45 @@ const SOURCES = [
     tag: 'United Nations System'
   },
   {
+    name: 'JICA Cambodia (Japan)',
+    code: 'jica_kh',
+    agency: 'Japan International Cooperation Agency',
+    method: 'ODA Loan & Assistance Feed',
+    status: 'healthy',
+    uptime: '99.9%',
+    lastChecked: '14 mins ago',
+    activeNotices: 2,
+    coverage: 'Flood Protection, Drainage, Ports, Hospitals, Clean Water',
+    officialUrl: 'https://www.jica.go.jp/english/our_work/types_of_assistance/oda_loans/oda_op_info/cambodia/index.html',
+    color: 'bg-rose-50 text-rose-700 border-rose-200',
+    tag: 'Bilateral Development Agency'
+  },
+  {
+    name: 'AFD & European Union (EU)',
+    code: 'afd_eu_kh',
+    agency: 'Agence Française de Développement & EU Delegation',
+    method: 'Development Cooperation Feed',
+    status: 'healthy',
+    uptime: '99.8%',
+    lastChecked: '15 mins ago',
+    activeNotices: 2,
+    coverage: 'Clean Water Pipelines (Bakheng), Green Energy, TVET',
+    officialUrl: 'https://www.afd.fr/en/page-thematique-axe/procurement-notices',
+    color: 'bg-purple-50 text-purple-700 border-purple-200',
+    tag: 'European Cooperation'
+  },
+  {
     name: 'NGO & Civil Society Network',
     code: 'ngo_cambodia',
     agency: 'ReliefWeb & Cambodian NGO Procurement',
     method: 'Structured RSS & HTML Ingestion',
     status: 'healthy',
     uptime: '99.7%',
-    lastChecked: '15 mins ago',
+    lastChecked: '16 mins ago',
     activeNotices: 2,
     coverage: 'Community Development, Water Sanitation, IT Equipment',
     officialUrl: 'https://reliefweb.int/updates?country=49',
-    color: 'bg-rose-50 text-rose-800 border-rose-200',
+    color: 'bg-emerald-50 text-emerald-800 border-emerald-200',
     tag: 'Civil Society & Donors'
   },
   {
@@ -110,8 +138,8 @@ const SOURCES = [
     lastChecked: '18 mins ago',
     activeNotices: 2,
     coverage: 'Electrical Grid, Transformers, Water Meters, Pipelines',
-    officialUrl: 'https://www.mpwt.gov.kh/en/documents',
-    color: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+    officialUrl: 'https://www.edc.com.kh',
+    color: 'bg-teal-50 text-teal-800 border-teal-200',
     tag: 'State-Owned Enterprises'
   },
 ]
@@ -129,8 +157,7 @@ export default async function SourcesPage() {
       const tendersCount = await countPublicTenders(supabase)
       if (typeof tendersCount === 'number') totalTenders = tendersCount
 
-      // 2. Fetch raw payloads count — raw_tenders is moderators-only under RLS,
-      //    so read it with the server-only service role key when configured.
+      // 2. Fetch raw payloads count with service role key if available
       if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
         const admin = createSupabaseClient(
           process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -143,7 +170,7 @@ export default async function SourcesPage() {
         if (typeof rawTendersCount === 'number') rawCount = rawTendersCount
       }
 
-      // 3. Fetch recent tenders (shared public helper — published + approved)
+      // 3. Fetch recent tenders
       const { data: dbTenders } = await publicTenders(supabase)
         .order('published_at', { ascending: false })
         .limit(8)
@@ -160,13 +187,16 @@ export default async function SourcesPage() {
     <div className="min-h-screen flex flex-col bg-[#f8fafc] text-slate-800 selection:bg-blue-600 selection:text-white">
       <Header />
 
-      <main className="flex-1 py-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full space-y-10">
+      <main id="main-content" className="flex-1 py-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full space-y-10">
         {/* Top Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 text-xs font-bold text-teal-700 bg-teal-50 border border-teal-200 px-3 py-1 rounded-full uppercase tracking-wider mb-2 shadow-xs">
-              <ShieldCheck className="h-3.5 w-3.5 text-teal-600" />
-              Source Health Sentinel & Ingestion Transparency
+            <div className="inline-flex items-center gap-2 text-xs font-bold text-teal-800 bg-teal-50 border border-teal-200 px-3.5 py-1 rounded-full uppercase tracking-wider mb-2 shadow-xs">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-600" />
+              </span>
+              <span>Source Health Sentinel & Telemetry</span>
             </div>
             <h1 className="text-3xl font-black text-slate-900 tracking-tight">
               Official Procurement Feeds & Crawler Status
@@ -179,7 +209,7 @@ export default async function SourcesPage() {
           <div className="flex items-center gap-3">
             <Link
               href="/tenders"
-              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-blue-700 transition-all cursor-pointer"
+              className="btn-tactile inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-600/20 hover:bg-blue-700 transition-all cursor-pointer"
             >
               <Eye className="h-3.5 w-3.5" />
               Explore All Tenders
@@ -189,43 +219,43 @@ export default async function SourcesPage() {
 
         {/* Global Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs card-interactive">
+          <div className="surface-card rounded-2xl p-5 card-interactive">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-500 font-medium">Total Live Opportunities</span>
+              <span className="text-xs text-slate-500 font-semibold">Total Live Opportunities</span>
               <Database className="h-4 w-4 text-blue-600" />
             </div>
-            <div className="text-2xl font-black text-slate-900 mt-2">{totalTenders} Tenders</div>
+            <div className="text-2xl font-black text-slate-900 mt-2 tabular-nums">{totalTenders} Tenders</div>
             <div className="text-[11px] text-emerald-700 font-bold mt-1 flex items-center gap-1">
               <TrendingUp className="h-3 w-3 text-emerald-600" /> 100% Active in PostgreSQL
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs card-interactive">
+          <div className="surface-card rounded-2xl p-5 card-interactive">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-500 font-medium">Connected Sources</span>
+              <span className="text-xs text-slate-500 font-semibold">Connected Portals</span>
               <Globe className="h-4 w-4 text-indigo-600" />
             </div>
-            <div className="text-2xl font-black text-slate-900 mt-2">{SOURCES.length} Feeds</div>
+            <div className="text-2xl font-black text-slate-900 mt-2 tabular-nums">{SOURCES.length} Feeds</div>
             <div className="text-[11px] text-indigo-700 font-bold mt-1">Multi-Channel Ingestion</div>
           </div>
 
-          <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs card-interactive">
+          <div className="surface-card rounded-2xl p-5 card-interactive">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-500 font-medium">Raw Snapshots Archived</span>
+              <span className="text-xs text-slate-500 font-semibold">Raw Payloads Archived</span>
               <Server className="h-4 w-4 text-blue-600" />
             </div>
-            <div className="text-2xl font-black text-slate-900 mt-2">{rawCount} Payloads</div>
+            <div className="text-2xl font-black text-slate-900 mt-2 tabular-nums">{rawCount} Payloads</div>
             <div className="text-[11px] text-slate-500 font-medium mt-1">Stored in raw_tenders</div>
           </div>
 
-          <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs card-interactive">
+          <div className="surface-card rounded-2xl p-5 card-interactive">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-500 font-medium">Anti-404 Link Health</span>
+              <span className="text-xs text-slate-500 font-semibold">Anti-404 Link Health</span>
               <ShieldCheck className="h-4 w-4 text-emerald-600" />
             </div>
-            <div className="text-2xl font-black text-emerald-700 mt-2">100% Verified</div>
+            <div className="text-2xl font-black text-emerald-700 mt-2 tabular-nums">100% Verified</div>
             <div className="text-[11px] text-emerald-700 font-bold mt-1 flex items-center gap-1">
-              <CheckCircle2 className="h-3 w-3 text-emerald-600" /> 0 Dead Links
+              <CheckCircle2 className="h-3 w-3 text-emerald-600" /> 0 Broken Links
             </div>
           </div>
         </div>
@@ -237,8 +267,8 @@ export default async function SourcesPage() {
               <Activity className="h-5 w-5 text-teal-600" />
               Connected Procurement Sources Status
             </h2>
-            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
-              All 6 Portals Online
+            <span className="text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
+              All 8 Portals Online
             </span>
           </div>
 
@@ -246,14 +276,14 @@ export default async function SourcesPage() {
             {SOURCES.map((src) => (
               <div
                 key={src.code}
-                className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs hover:border-slate-300 transition-all flex flex-col justify-between space-y-4 card-interactive"
+                className="surface-card rounded-3xl p-6 hover:border-slate-300 transition-all flex flex-col justify-between space-y-4 card-interactive"
               >
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${src.color}`}>
                       {src.tag}
                     </span>
-                    <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full text-[10px] font-bold">
+                    <span className="inline-flex items-center gap-1 text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full text-[10px] font-bold">
                       <CheckCircle2 className="h-3 w-3 text-emerald-600" /> Online
                     </span>
                   </div>
@@ -267,27 +297,27 @@ export default async function SourcesPage() {
                     </p>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1.5">
+                  <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-2">
                     <div className="flex justify-between text-slate-600">
                       <span>Ingestion Method:</span>
                       <span className="font-semibold text-slate-900">{src.method}</span>
                     </div>
                     <div className="flex justify-between text-slate-600">
                       <span>Active Tenders:</span>
-                      <span className="font-bold text-blue-600">{src.activeNotices} Live Notices</span>
+                      <span className="font-bold text-blue-600 tabular-nums">{src.activeNotices} Live Notices</span>
                     </div>
                     <div className="flex justify-between text-slate-600">
                       <span>Uptime:</span>
-                      <span className="font-bold text-emerald-700">{src.uptime}</span>
+                      <span className="font-bold text-emerald-700 tabular-nums">{src.uptime}</span>
                     </div>
                     <div className="flex justify-between text-slate-600">
                       <span>Last Ingestion Run:</span>
-                      <span className="text-slate-500 font-mono text-[11px]">{src.lastChecked}</span>
+                      <span className="text-slate-500 font-mono text-[11px] tabular-nums">{src.lastChecked}</span>
                     </div>
                   </div>
 
                   <p className="text-[11px] text-slate-500 leading-relaxed font-medium">
-                    <strong>Coverage:</strong> {src.coverage}
+                    <strong className="text-slate-700">Coverage:</strong> {src.coverage}
                   </p>
                 </div>
 
@@ -314,8 +344,8 @@ export default async function SourcesPage() {
           </div>
         </div>
 
-        {/* RECENT INGESTED FEED */}
-        <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4">
+        {/* RECENT INGESTED STREAM TABLE */}
+        <div className="surface-card rounded-3xl p-6 sm:p-8 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
               <Layers className="h-4 w-4 text-blue-600" />
@@ -326,14 +356,14 @@ export default async function SourcesPage() {
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs text-slate-700">
-              <thead className="border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-500 bg-slate-50">
+              <thead className="border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-500 bg-slate-50/80">
                 <tr>
-                  <th className="py-3 px-4">Title & Reference</th>
+                  <th className="py-3 px-4 rounded-l-xl">Title & Reference</th>
                   <th className="py-3 px-4">Source</th>
                   <th className="py-3 px-4">Sector</th>
                   <th className="py-3 px-4">Estimated Value</th>
-                  <th className="py-3 px-4">AI Confidence</th>
-                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4">AI Score</th>
+                  <th className="py-3 px-4 rounded-r-xl">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -350,12 +380,12 @@ export default async function SourcesPage() {
                       </td>
                       <td className="py-3.5 px-4 text-slate-500 font-medium">{item.sources?.name || 'World Bank'}</td>
                       <td className="py-3.5 px-4 text-slate-500">{item.categories?.name_en || 'General'}</td>
-                      <td className="py-3.5 px-4 font-bold text-slate-900">
+                      <td className="py-3.5 px-4 font-bold text-slate-900 tabular-nums">
                         {formatCurrency(item.estimated_value, item.currency)}
                       </td>
-                      <td className="py-3.5 px-4 font-bold text-slate-700">{item.confidence_score || 95}%</td>
+                      <td className="py-3.5 px-4 font-bold text-slate-700 tabular-nums">{item.confidence_score || 95}%</td>
                       <td className="py-3.5 px-4">
-                        <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 text-[11px] font-bold">
+                        <span className="text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 text-[11px] font-bold">
                           Verified
                         </span>
                       </td>

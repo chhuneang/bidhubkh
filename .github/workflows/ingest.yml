@@ -25,6 +25,8 @@ on:
           - adb_kh
           - mef_gdipp
           - ungm
+          - jica_kh
+          - afd_eu_kh
           - ngo_cambodia
           - state_utilities
         default: all

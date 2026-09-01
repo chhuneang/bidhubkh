@@ -35,9 +35,14 @@ import {
   Tag,
   DollarSign,
   Trophy,
-  ArrowRight
+  ArrowRight,
+  FileText,
+  Copy,
+  Download,
+  Languages
 } from 'lucide-react'
 import { StageDropdown } from '@/components/dashboard/StageDropdown'
+import { ProposalCoPilotModal } from '@/components/proposals/ProposalCoPilotModal'
 
 interface DashboardClientProps {
   user: any
@@ -46,6 +51,7 @@ interface DashboardClientProps {
   alerts: any[]
   categories: any[]
   recommendedTenders?: any[]
+  proposals?: any[]
 }
 
 const STAGES = [
@@ -64,14 +70,19 @@ export function DashboardClient({
   savedTenders,
   alerts,
   categories,
-  recommendedTenders = []
+  recommendedTenders = [],
+  proposals = []
 }: DashboardClientProps) {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<'pipeline' | 'matches' | 'company' | 'alerts'>('pipeline')
+  const [activeTab, setActiveTab] = useState<'pipeline' | 'matches' | 'proposals' | 'company' | 'alerts'>('pipeline')
   const [stageFilter, setStageFilter] = useState('all')
   const [isPending, startTransition] = useTransition()
   const [profileSuccess, setProfileSuccess] = useState(false)
   const [alertModalOpen, setAlertModalOpen] = useState(false)
+  const [proposalList, setProposalList] = useState<any[]>(proposals)
+  const [selectedProposalTender, setSelectedProposalTender] = useState<any | null>(null)
+  const [copilotOpen, setCopilotOpen] = useState(false)
+  const [copiedId, setCopiedId] = useState<string | null>(null)
 
   // Rank recommended tenders by AI match score
   const matchedOpportunities = recommendedTenders.map((tender) => {
@@ -121,6 +132,62 @@ export function DashboardClient({
         router.refresh()
       }
     })
+  }
+
+  const handleDeleteProposal = async (proposalId: string) => {
+    if (!confirm('Are you sure you want to delete this proposal draft?')) return
+    try {
+      const res = await fetch(`/api/proposals/${proposalId}`, { method: 'DELETE' })
+      const data = await res.json()
+      if (data.success) {
+        setProposalList((prev) => prev.filter((p) => p.id !== proposalId))
+      }
+    } catch (err) {
+      console.error('Failed to delete proposal', err)
+    }
+  }
+
+  const handleOpenProposalInStudio = (prop: any) => {
+    setSelectedProposalTender({
+      id: prop.tender?.id || prop.tender_id,
+      title: prop.tender?.title || prop.title,
+      tender_number: prop.tender?.reference_number,
+      estimated_amount: prop.tender?.estimated_value,
+      currency: prop.tender?.currency,
+      submission_deadline: prop.tender?.deadline,
+      organization: prop.tender?.organization
+    })
+    setCopilotOpen(true)
+  }
+
+  const handleCopyProposalMarkdown = (prop: any) => {
+    const sections = prop.sections || {}
+    let md = `# ${prop.title}\n\n`
+    Object.values(sections).forEach((s: any) => {
+      if (s) {
+        md += `## ${s.title}\n\n${s.content}\n\n---\n\n`
+      }
+    })
+    navigator.clipboard.writeText(md)
+    setCopiedId(prop.id)
+    setTimeout(() => setCopiedId(null), 2000)
+  }
+
+  const handleDownloadProposalMarkdown = (prop: any) => {
+    const sections = prop.sections || {}
+    let md = `# ${prop.title}\n\n`
+    Object.values(sections).forEach((s: any) => {
+      if (s) {
+        md += `## ${s.title}\n\n${s.content}\n\n---\n\n`
+      }
+    })
+    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `Proposal_${prop.id}.md`
+    link.click()
+    URL.revokeObjectURL(url)
   }
 
   const handleCreateAlert = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -298,6 +365,22 @@ export function DashboardClient({
           <span>AI Matched Opportunities</span>
           <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-indigo-100 text-indigo-800 font-bold">
             {matchedOpportunities.length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('proposals')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 shrink-0 cursor-pointer ${
+            activeTab === 'proposals'
+              ? 'bg-white text-emerald-600 shadow-xs border border-emerald-200 ring-2 ring-emerald-500/10 scale-[1.02]'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-white/60 border border-transparent'
+          }`}
+        >
+          <FileText className="h-3.5 w-3.5" />
+          <span>Proposal Drafts</span>
+          <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800 font-bold">
+            {proposalList.length}
           </span>
         </button>
 
@@ -552,6 +635,144 @@ export function DashboardClient({
               )
             })}
           </div>
+        </div>
+      )}
+
+      {/* TAB 2.5: PROPOSAL DRAFTS */}
+      {activeTab === 'proposals' && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-black text-slate-900">AI Bid Proposal Workspace</h2>
+                <span className="px-2 py-0.5 text-xs font-bold bg-emerald-100 text-emerald-800 rounded-full">
+                  {proposalList.length} Saved
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-1 font-medium">
+                Review, edit, and export tailored proposal dossiers in Khmer, English, or Bilingual format.
+              </p>
+            </div>
+
+            <Link
+              href="/tenders"
+              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-blue-700 transition-all cursor-pointer w-fit"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Generate from New Tender
+            </Link>
+          </div>
+
+          {proposalList.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {proposalList.map((prop) => {
+                const sectionCount = prop.sections ? Object.keys(prop.sections).length : 0
+                return (
+                  <div
+                    key={prop.id}
+                    className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs flex flex-col justify-between space-y-4 card-interactive"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200 flex items-center gap-1">
+                          <Languages className="w-3 h-3 text-blue-600" />
+                          {prop.language?.toUpperCase() || 'EN'}
+                        </span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          {prop.status?.toUpperCase() || 'DRAFT'}
+                        </span>
+                      </div>
+
+                      <div>
+                        <h3 className="font-bold text-slate-900 text-sm line-clamp-2 leading-snug">
+                          {prop.title}
+                        </h3>
+                        {prop.tender?.title && (
+                          <p className="text-xs text-slate-500 line-clamp-1 mt-1">
+                            Ref: {prop.tender.reference_number || prop.tender.slug || 'Tender'}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1.5">
+                        <div className="flex justify-between text-slate-500">
+                          <span>Included Sections:</span>
+                          <span className="font-bold text-slate-800">{sectionCount} Sections</span>
+                        </div>
+                        <div className="flex justify-between text-slate-500">
+                          <span>Last Updated:</span>
+                          <span className="font-medium text-slate-700">
+                            {formatDate(prop.updated_at || prop.created_at)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenProposalInStudio(prop)}
+                          className="px-3 py-1.5 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold text-xs transition-colors flex items-center gap-1 cursor-pointer"
+                        >
+                          <Sparkles className="w-3.5 h-3.5" />
+                          Edit Studio
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyProposalMarkdown(prop)}
+                          className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                          title="Copy Markdown"
+                        >
+                          {copiedId === prop.id ? (
+                            <Check className="w-3.5 h-3.5 text-emerald-600" />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDownloadProposalMarkdown(prop)}
+                          className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                          title="Download Markdown (.md)"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteProposal(prop.id)}
+                        className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                        title="Delete Proposal Draft"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 shadow-xs space-y-4 max-w-lg mx-auto">
+              <div className="h-16 w-16 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center mx-auto text-blue-600 shadow-xs">
+                <FileText className="h-8 w-8" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-slate-900">No proposal drafts yet</h3>
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                  Browse live tenders and click <strong className="text-blue-600">Draft Bid Proposal with AI</strong> on any opportunity to generate your first submission dossier.
+                </p>
+              </div>
+              <Link
+                href="/tenders"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700 shadow-xs transition-all cursor-pointer"
+              >
+                Browse Tenders
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          )}
         </div>
       )}
 
@@ -825,6 +1046,20 @@ export function DashboardClient({
             </div>
           )}
         </div>
+      )}
+
+      {/* Interactive Proposal Co-Pilot Modal Studio */}
+      {selectedProposalTender && (
+        <ProposalCoPilotModal
+          isOpen={copilotOpen}
+          onClose={() => {
+            setCopilotOpen(false)
+            setSelectedProposalTender(null)
+            router.refresh()
+          }}
+          tender={selectedProposalTender}
+          company={initialCompany}
+        />
       )}
     </div>
   )

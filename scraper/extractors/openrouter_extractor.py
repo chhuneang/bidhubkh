@@ -45,13 +45,13 @@ class TenderAIExtractionResult(BaseModel):
 class OpenRouterExtractor:
     """
     Procurement Intelligence Extractor powered by OpenRouter API.
-    Supports stealth/ox-alpha, openrouter/auto, and free models.
+    Supports high-speed free models, openrouter/auto, and custom models.
     """
     DEFAULT_MODELS = [
-        "stealth/ox-alpha",
-        "nvidia/nemotron-3.5-lightning:free",
+        "minimax/minimax-m3:free",
+        "inclusionai/ling-3.0-flash-fin:free",
         "google/gemma-4-31b-it:free",
-        "google/gemma-4-26b-a4b-it:free",
+        "nvidia/nemotron-3.5-lightning:free",
         "openrouter/auto"
     ]
 

@@ -381,6 +381,53 @@ export type Database = {
           },
         ]
       }
+      proposals: {
+        Row: {
+          created_at: string
+          custom_notes: string | null
+          id: string
+          language: string
+          sections: Json
+          status: string
+          tender_id: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          custom_notes?: string | null
+          id?: string
+          language?: string
+          sections?: Json
+          status?: string
+          tender_id: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          custom_notes?: string | null
+          id?: string
+          language?: string
+          sections?: Json
+          status?: string
+          tender_id?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposals_tender_id_fkey"
+            columns: ["tender_id"]
+            isOneToOne: false
+            referencedRelation: "tenders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       saved_tenders: {
         Row: {
           created_at: string

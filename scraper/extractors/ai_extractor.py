@@ -10,7 +10,7 @@ load_dotenv()
 class MultiProviderAIExtractor:
     """
     Unified AI extraction engine that cascades between:
-    1. OpenRouter (Supports free models, experimental alpha models, Llama 3.3, DeepSeek R1)
+    1. OpenRouter (Supports verified free models, high-speed LLMs, and custom endpoints)
     2. Google Gemini Flash (Direct high-speed Google API)
     3. Deterministic Heuristic Fallback (Offline safe)
     """

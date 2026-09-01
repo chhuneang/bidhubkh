@@ -14,7 +14,7 @@
    - **Cambodian Government (MEF / GDPP)**: National competitive bidding packages across ministries.
 
 2. 🤖 **Multi-Provider AI Tender Intelligence**:
-   - Powered by OpenRouter (`stealth/ox-alpha`) and Google Gemini Flash.
+   - Powered by OpenRouter free intelligence engine and Google Gemini Flash.
    - Generates executive 2-3 sentence summaries, line-item Bill of Materials, and mandatory compliance checklists.
 
 3. 🎯 **AI Supplier Matching & Qualification Score**:
@@ -88,7 +88,7 @@ python -m scraper.notifications.dispatcher --chat-id YOUR_CHAT_ID
 * **Frontend**: Next.js 15 (App Router, Turbopack, React 19, TypeScript, Tailwind CSS, Lucide Icons).
 * **Database & Auth**: Supabase PostgreSQL 15, Row-Level Security (RLS), OAuth 2.0.
 * **Scraper Engine**: Python 3.x (`requests`, `pydantic`, `supabase`, `python-dotenv`).
-* **AI Intelligence**: OpenRouter (`stealth/ox-alpha`), Google Gemini Flash.
+* **AI Intelligence**: OpenRouter (Multi-model free tier), Google Gemini Flash.
 * **Notifications**: Telegram Bot API (`sendMessage`), Supabase Alerts Engine.
 
 ---

@@ -64,7 +64,7 @@ Welcome, AI Agent! This document tracks the exact architectural decisions, compl
 ### Milestone 08 — AI Tender Intelligence & Multi-Provider Engine
 - Built unified multi-provider AI extraction engine in [scraper/extractors/ai_extractor.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/extractors/ai_extractor.py).
 - Supported AI providers:
-  - **OpenRouter** ([openrouter_extractor.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/extractors/openrouter_extractor.py)): Active with `stealth/ox-alpha` free model and failovers.
+  - **OpenRouter** ([openrouter_extractor.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/extractors/openrouter_extractor.py)): Active with verified high-speed free models and intelligent failovers.
   - **Google Gemini Flash** ([gemini_extractor.py](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/scraper/extractors/gemini_extractor.py)): Direct API backup.
   - **Deterministic Rule Fallback**: Ensures 100% scraper uptime if offline.
 - Enriches every incoming tender with 2-3 sentence executive summaries, bill of materials, and mandatory compliance checklists.
@@ -139,10 +139,61 @@ Welcome, AI Agent! This document tracks the exact architectural decisions, compl
   - Verified 56 / 56 frontend Vitest tests + 167 / 167 scraper Pytest tests (223 / 223 passing).
   - Verified unauthenticated public read (`anon` role) on published tenders and documents.
 
+### Milestone 17 — Backend REST API Perfection, 8 Verified Source Expansion & Currency Engine (TDD)
+- **Next.js Backend REST API Layer**:
+  - `GET /api/tenders`: Advanced public catalog query endpoint with pagination, keyword search, sector category filter, source portal filter, and value range sorting.
+  - `GET /api/tenders/[slug]`: Deep-relational single tender detail API with associated organization, source, category, attachments, and AI summary.
+  - `GET /api/sources`: Real-time source health & crawler status API.
+  - `GET /api/currency`: Real-time currency exchange rates service endpoint supporting USD ($), KHR (៛), EUR (€), and JPY (¥) with NBC baseline fallback.
+  - `POST /api/match`: AI Supplier Qualification & Tender Match calculation API.
+  - `POST /api/decision-matrix`: Win Probability & Bid/No-Bid Decision Matrix calculation API.
+- **8 Official Verified Sources & Ingestion Adapters**:
+  - `world_bank_kh` (World Bank Cambodia)
+  - `adb_kh` (Asian Development Bank Cambodia)
+  - `mef_gdipp` (General Department of Public Procurement / MEF)
+  - `ungm` (UN Global Marketplace - UNDP, UNICEF, WHO, WFP)
+  - `jica_kh` (**NEW**: Japan International Cooperation Agency Cambodia)
+  - `afd_eu_kh` (**NEW**: Agence Française de Développement & European Union Cambodia)
+  - `ngo_cambodia` (ReliefWeb & NGO Portals)
+  - `state_utilities` (Electricité du Cambodge & Phnom Penh Water Authority)
+- **Database Migration & Link Sentinel**:
+  - Applied `00012_expand_verified_sources.sql` in Supabase PostgreSQL registering all 8 sources and official procuring entities.
+  - Registered `jica.go.jp`, `afd.fr`, and `eeas.europa.eu` in `scraper/link_sentinel.py`.
+- **Strict TDD Verification**:
+  - 80 / 80 frontend Vitest tests passing (`npm run test`).
+  - 173 / 173 scraper Pytest tests passing (`python -m pytest`).
+  - 18 / 18 routes compiled cleanly in `npm run build` with 0 errors.
+
+### Milestone 18 — AI Bid Proposal Co-Pilot & Drafting Workspace (TDD)
+- **Modular 5-Section Proposal Generation Engine**:
+  - Built pure generation engine in [web/src/lib/proposal_engine.ts](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/web/src/lib/proposal_engine.ts) generating tailored, compliant dossiers:
+    1. Executive Cover Letter & Submission Memo
+    2. Scope of Work & Technical Methodology (BoQ & QA/QC alignment)
+    3. Mandatory Compliance & Eligibility Matrix (GDT Tax clearance, MoC patent, certifications)
+    4. Project Team & Delivery Schedule Milestones
+    5. Commercial Pricing & Milestone Payment Framework
+- **Smart Context-Aware Bilingual Output**:
+  - Auto-selects Khmer (ភាសាខ្មែរ) for government/SOE tenders (MEF, EDC) and English for international development partners (World Bank, ADB, UNGM, JICA, AFD).
+  - Instant toggle between **English (EN)**, **Khmer (KM)**, and **Bilingual Dual (EN/KM)** output.
+- **REST API Layer & Supabase Persistence**:
+  - `POST /api/proposals/generate` — On-demand proposal section generation endpoint.
+  - `GET /api/proposals` — User saved proposals catalog API.
+  - `POST /api/proposals` — Save & update proposal drafts.
+  - `DELETE /api/proposals/[id]` — Remove proposal draft.
+  - Applied migration `database/migrations/00013_proposals_schema.sql` creating `public.proposals` with RLS policies and covering indexes.
+- **Interactive UI & Studio Workspace**:
+  - Built [ProposalCoPilotModal.tsx](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/web/src/components/proposals/ProposalCoPilotModal.tsx) with live markdown editor, tabbed section preview, and multi-format export (**Save Draft**, **Markdown .md Download**, **Copy to Clipboard**, **Print/PDF**).
+  - Added primary trigger button on Tender Detail page ([/tenders/[slug]](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/web/src/app/tenders/%5Bslug%5D/page.tsx)).
+  - Added dedicated **"Proposal Drafts"** workspace tab in Supplier Dashboard ([/dashboard](file:///c:/Users/eangl/OneDrive/Desktop/bidhubkh/web/src/app/dashboard/page.tsx)).
+- **Strict TDD Verification**:
+  - 96 / 96 frontend Vitest tests passing (`npm run test`).
+  - 173 / 173 scraper Pytest tests passing (`python -m pytest`).
+  - 21 / 21 routes compiled cleanly in `npm run build` with 0 errors.
+
 ---
 
-## 🏆 Project Completion Status: 16 / 16 Milestones Completed & Fully Audited
-All 16 milestones are fully implemented, verified, tested against Supabase PostgreSQL, and 100% production-ready.
+## 🏆 Project Completion Status: 18 / 18 Milestones Completed & Fully Audited
+All 18 milestones are fully implemented, verified, tested against Supabase PostgreSQL, and 100% production-ready.
 
 ---
 
@@ -154,4 +205,6 @@ All 16 milestones are fully implemented, verified, tested against Supabase Postg
 * **Run scraper tests**: `python -m pytest`
 * **Run scraper scheduler**: `npm run scheduler` (or `npm run scheduler:4h`)
 * **Supabase MCP tools**: `list_tables`, `execute_sql`, `get_publishable_keys`, `get_project_url`, `get_advisors`
+
+
 

@@ -1,0 +1,11 @@
+{
+  "include": ["scraper"],
+  "exclude": ["node_modules", "web/.next", ".venv"],
+  "extraPaths": [
+    "C:/Users/eangl/AppData/Local/hermes/hermes-agent/venv/Lib/site-packages",
+    "."
+  ],
+  "reportMissingTypeStubs": false,
+  "pythonVersion": "3.11",
+  "pythonPlatform": "Windows"
+}

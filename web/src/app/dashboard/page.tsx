@@ -79,6 +79,32 @@ export default async function DashboardPage() {
     .order('published_at', { ascending: false })
     .limit(10)
 
+  // 6. Fetch Proposals
+  const { data: proposals } = await supabase
+    .from('proposals')
+    .select(`
+      id,
+      title,
+      language,
+      sections,
+      custom_notes,
+      status,
+      created_at,
+      updated_at,
+      tender:tenders (
+        id,
+        title,
+        slug,
+        reference_number,
+        estimated_value,
+        currency,
+        deadline,
+        sources (name)
+      )
+    `)
+    .eq('user_id', user.id)
+    .order('updated_at', { ascending: false })
+
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc] text-slate-800 selection:bg-blue-600 selection:text-white">
       <Header />
@@ -91,6 +117,7 @@ export default async function DashboardPage() {
           alerts={alerts || []}
           categories={categories || []}
           recommendedTenders={openTenders || []}
+          proposals={proposals || []}
         />
       </main>
 

@@ -15,6 +15,8 @@ import sys
 
 from scraper.pipeline import IngestionPipeline
 from scraper.sources.adb import ADBCambodiaSource
+from scraper.sources.afd_eu import AFDEUSource
+from scraper.sources.jica import JICACambodiaSource
 from scraper.sources.mef import MEFSource
 from scraper.sources.ngo_cambodia import NGOCambodiaSource
 from scraper.sources.state_utilities import StateUtilitiesSource
@@ -29,6 +31,8 @@ SOURCES = {
     "ungm": UNGMCambodiaSource,
     "ngo_cambodia": NGOCambodiaSource,
     "state_utilities": StateUtilitiesSource,
+    "jica_kh": JICACambodiaSource,
+    "afd_eu_kh": AFDEUSource,
 }
 
 
@@ -56,7 +60,7 @@ def main():
         "--source",
         type=str,
         default="all",
-        help="Source code to run ('world_bank_kh', 'adb_kh', 'mef_gdipp', 'ungm', 'ngo_cambodia', 'state_utilities', 'all')"
+        help="Source code to run ('world_bank_kh', 'adb_kh', 'mef_gdipp', 'ungm', 'ngo_cambodia', 'state_utilities', 'jica_kh', 'afd_eu_kh', 'all')"
     )
     parser.add_argument(
         "--no-ai",
